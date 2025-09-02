@@ -4,6 +4,27 @@
     "type": "boolean",
     "default": false
   },
+  "enableKroki": {
+    "description": "Markdown--Enable rendering diagrams via Kroki server.",
+    "type": "boolean",
+    "default": false
+  },
+  "krokiServerUrl": {
+    "description": "Markdown--Kroki server base URL (e.g., http://localhost:8000).",
+    "type": "string",
+    "default": "http://localhost:8000"
+  },
+  "krokiTimeoutMs": {
+    "description": "Markdown--Timeout for Kroki requests in milliseconds.",
+    "type": "number",
+    "minimum": 0,
+    "default": 5000
+  },
+  "diagramExactSize": {
+    "description": "Markdown--Keep exact diagram size from renderer/Kroki.",
+    "type": "boolean",
+    "default": true
+  },
   "autoSaveDelay": {
     "description": "General--The time in ms after a change that the file is saved.",
     "type": "number",

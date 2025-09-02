@@ -53,6 +53,12 @@ const state = {
   isGitlabCompatibilityEnabled: false,
   sequenceTheme: 'hand',
 
+  // Kroki integration
+  enableKroki: false,
+  krokiServerUrl: 'http://localhost:8000',
+  krokiTimeoutMs: 5000,
+  diagramExactSize: true,
+
   theme: 'light',
   autoSwitchTheme: 2,
 

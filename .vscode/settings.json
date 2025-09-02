@@ -1,4 +1,17 @@
 {
+  // Reduce VS Code interaction with generated artifacts to avoid file locks on Windows
+  "files.watcherExclude": {
+    "**/build/**": true
+  },
+  "search.exclude": {
+    "**/build/**": true
+  },
+  // Hide build output from Explorer to prevent accidental opens
+  "files.exclude": {
+    "build/": true
+  }
+}
+{
   "editor.insertSpaces": true,
   "editor.tabSize": 2,
   // Issues with unit test files

@@ -1,6 +1,6 @@
 import loadRenderer from '../../renderers'
-import { CLASS_OR_ID, PREVIEW_DOMPURIFY_CONFIG } from '../../config'
-import { conflict, mixins, camelToSnake, sanitize } from '../../utils'
+import { CLASS_OR_ID, DIAGRAM_DOMPURIFY_CONFIG } from '../../config'
+import { conflict, mixins, camelToSnake, sanitizeRaw, makeSvgResponsive, escapeHtmlTags } from '../../utils'
 import { patch, toVNode, toHTML, h } from './snabbdom'
 import { beginRules } from '../rules'
 import renderInlines from './renderInlines'
@@ -97,11 +97,20 @@ class StateRender {
 
   async renderMermaid () {
     if (this.mermaidCache.size) {
-      const mermaid = await loadRenderer('mermaid')
-      mermaid.initialize({
-        securityLevel: 'strict',
-        theme: this.muya.options.mermaidTheme
-      })
+      // Try Kroki first if enabled and load Mermaid only when needed.
+      let kroki
+      const useKroki = !!(this.muya.options && this.muya.options.enableKroki && this.muya.options.krokiServerUrl)
+      if (useKroki) {
+        try { kroki = await import('./kroki') } catch (_) {}
+      }
+      let mermaid
+      if (!useKroki || !kroki || !kroki.isKrokiSupported('mermaid')) {
+        mermaid = await loadRenderer('mermaid')
+        mermaid.initialize({
+          securityLevel: 'strict',
+          theme: this.muya.options.mermaidTheme
+        })
+      }
       for (const [key, value] of this.mermaidCache.entries()) {
         const { code } = value
         const target = document.querySelector(key)
@@ -109,11 +118,37 @@ class StateRender {
           continue
         }
         try {
-          mermaid.parse(code)
-          target.innerHTML = sanitize(code, PREVIEW_DOMPURIFY_CONFIG, true)
-          mermaid.init(undefined, target)
+          if (useKroki && kroki && kroki.isKrokiSupported('mermaid')) {
+            const svg = await kroki.renderKrokiToSvg(this.muya.options.krokiServerUrl, 'mermaid', code, { timeoutMs: this.muya.options.krokiTimeoutMs })
+            const processed = this.muya.options.diagramExactSize ? svg : makeSvgResponsive(svg)
+            // Exact-size setting applies only to Kroki diagrams
+            if (this.muya.options.diagramExactSize) {
+              target.classList.add('ag-diagram-exact-size')
+            } else {
+              target.classList.remove('ag-diagram-exact-size')
+            }
+            target.innerHTML = sanitizeRaw(processed, DIAGRAM_DOMPURIFY_CONFIG)
+          } else {
+            // Local Mermaid rendering
+            // Ensure mermaid is loaded if not already
+            if (!mermaid) {
+              mermaid = await loadRenderer('mermaid')
+              mermaid.initialize({
+                securityLevel: 'strict',
+                theme: this.muya.options.mermaidTheme
+              })
+            }
+            // Do not apply exact-size class to local renders
+            target.classList.remove('ag-diagram-exact-size')
+            // Render via a mermaid container so Mermaid transforms it into SVG
+            const containerHtml = `<div class="mermaid">${escapeHtmlTags(code)}</div>`
+            target.innerHTML = sanitizeRaw(containerHtml, DIAGRAM_DOMPURIFY_CONFIG)
+            // Initialize mermaid on this target only
+            mermaid.init(undefined, target.querySelectorAll('.mermaid'))
+          }
         } catch (err) {
-          target.innerHTML = '< Invalid Mermaid Codes >'
+          // Do not fallback to local if Kroki is enabled; show error
+          target.innerHTML = '< Invalid Mermaid Codes or Kroki error >'
           target.classList.add(CLASS_OR_ID.AG_MATH_ERROR)
         }
       }
@@ -125,11 +160,19 @@ class StateRender {
   async renderDiagram () {
     const cache = this.diagramCache
     if (cache.size) {
-      const RENDER_MAP = {
-        flowchart: await loadRenderer('flowchart'),
-        sequence: await loadRenderer('sequence'),
-        plantuml: await loadRenderer('plantuml'),
-        'vega-lite': await loadRenderer('vega-lite')
+      // Try to use Kroki if enabled and supported.
+      let useKroki = false
+      let krokiServer = ''
+      let kroki
+      try {
+        useKroki = !!this.muya.options.enableKroki
+        krokiServer = this.muya.options.krokiServerUrl || ''
+        if (useKroki && krokiServer) {
+          kroki = await import('./kroki')
+        }
+      } catch (_) {
+        // Ignore Kroki import errors and fallback to local renderers
+        useKroki = false
       }
 
       for (const [key, value] of cache.entries()) {
@@ -138,7 +181,6 @@ class StateRender {
           continue
         }
         const { code, functionType } = value
-        const render = RENDER_MAP[functionType]
         const options = {}
         if (functionType === 'sequence') {
           Object.assign(options, { theme: this.muya.options.sequenceTheme })
@@ -151,19 +193,40 @@ class StateRender {
           })
         }
         try {
-          if (functionType === 'flowchart' || functionType === 'sequence') {
+          if (useKroki && kroki && kroki.isKrokiSupported(functionType)) {
+            target.innerHTML = 'Loading...'
+            const svg = await kroki.renderKrokiToSvg(krokiServer, functionType, code, { timeoutMs: this.muya.options.krokiTimeoutMs })
+            const processed = this.muya.options.diagramExactSize ? svg : makeSvgResponsive(svg)
+            if (this.muya.options.diagramExactSize) {
+              target.classList.add('ag-diagram-exact-size')
+            } else {
+              target.classList.remove('ag-diagram-exact-size')
+            }
+            target.innerHTML = sanitizeRaw(processed, DIAGRAM_DOMPURIFY_CONFIG)
+          } else if (functionType === 'flowchart' || functionType === 'sequence') {
+            const render = await loadRenderer(functionType)
+            // Exact-size toggle is Kroki-only
+            target.classList.remove('ag-diagram-exact-size')
             const diagram = render.parse(code)
             target.innerHTML = ''
             diagram.drawSVG(target, options)
           } else if (functionType === 'plantuml') {
+            const render = await loadRenderer('plantuml')
+            // Exact-size toggle is Kroki-only
+            target.classList.remove('ag-diagram-exact-size')
             const diagram = render.parse(code)
             target.innerHTML = ''
             diagram.insertImgElement(target)
           } else if (functionType === 'vega-lite') {
+            const render = await loadRenderer('vega-lite')
+            // Exact-size toggle is Kroki-only
+            target.classList.remove('ag-diagram-exact-size')
             await render(key, JSON.parse(code), options)
           }
         } catch (err) {
-          target.innerHTML = `< Invalid ${functionType === 'flowchart' ? 'Flow Chart' : 'Sequence'} Codes >`
+          // Do not fallback to local if Kroki is enabled; show error
+          const msg = functionType === 'flowchart' ? 'Flow Chart' : (functionType === 'sequence' ? 'Sequence' : functionType)
+          target.innerHTML = `<! Invalid ${msg} Codes or Kroki error >`
           target.classList.add(CLASS_OR_ID.AG_MATH_ERROR)
         }
       }

@@ -92,6 +92,33 @@
           :onChange="value => onSelectChange('sequenceTheme', value)"
           more="https://bramp.github.io/js-sequence-diagrams/"
         ></cur-select>
+        <bool
+          description="Render diagrams via Kroki"
+          notes="If enabled, MarkText sends diagram code to the configured Kroki server and embeds the returned SVG."
+          :bool="enableKroki"
+          :onChange="value => onSelectChange('enableKroki', value)"
+        ></bool>
+        <text-box
+          description="Kroki server URL"
+          :input="krokiServerUrl"
+          :onChange="value => onSelectChange('krokiServerUrl', value)"
+          :defaultValue="'http://localhost:8000'"
+          :regexValidator="/^(https?:\/\/).*/"
+        ></text-box>
+        <text-box
+          description="Kroki timeout (ms)"
+          notes="Timeout for Kroki requests in milliseconds. 0 = no timeout."
+          :input="String(krokiTimeoutMs)"
+          :onChange="value => onSelectChange('krokiTimeoutMs', Math.max(0, parseInt(value || '0', 10) || 0))"
+          :defaultValue="'5000'"
+          :regexValidator="/^(?:\d+)$|^$/"
+        ></text-box>
+        <bool
+          description="Kroki: Keep exact diagram size (no responsive scaling)"
+          notes="Applies only to Kroki-rendered diagrams. Keeps SVG width/height/preserveAspectRatio as returned by Kroki."
+          :bool="diagramExactSize"
+          :onChange="value => onSelectChange('diagramExactSize', value)"
+        ></bool>
       </template>
     </compound>
 
@@ -126,13 +153,15 @@ import {
   frontmatterTypeOptions,
   sequenceThemeOptions
 } from './config'
+import TextBox from '../common/textBox'
 
 export default {
   components: {
     Compound,
     Separator,
     Bool,
-    CurSelect
+    CurSelect,
+    TextBox
   },
   data () {
     this.bulletListMarkerOptions = bulletListMarkerOptions
@@ -155,7 +184,11 @@ export default {
       footnote: state => state.preferences.footnote,
       isHtmlEnabled: state => state.preferences.isHtmlEnabled,
       isGitlabCompatibilityEnabled: state => state.preferences.isGitlabCompatibilityEnabled,
-      sequenceTheme: state => state.preferences.sequenceTheme
+      sequenceTheme: state => state.preferences.sequenceTheme,
+      enableKroki: state => state.preferences.enableKroki,
+      krokiServerUrl: state => state.preferences.krokiServerUrl,
+      krokiTimeoutMs: state => state.preferences.krokiTimeoutMs,
+      diagramExactSize: state => state.preferences.diagramExactSize
     })
   },
   methods: {

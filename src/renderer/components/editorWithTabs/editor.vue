@@ -166,6 +166,12 @@ export default {
       spellcheckerNoUnderline: state => state.preferences.spellcheckerNoUnderline,
       spellcheckerLanguage: state => state.preferences.spellcheckerLanguage,
 
+      // Diagram/Kroki preferences (needed so watchers fire on change)
+      enableKroki: state => state.preferences.enableKroki,
+      krokiServerUrl: state => state.preferences.krokiServerUrl,
+      krokiTimeoutMs: state => state.preferences.krokiTimeoutMs,
+      diagramExactSize: state => state.preferences.diagramExactSize,
+
       currentFile: state => state.editor.currentFile,
       projectTree: state => state.project.projectTree,
 
@@ -298,6 +304,32 @@ export default {
       const { editor } = this
       if (value !== oldValue && editor) {
         editor.setOptions({ isGitlabCompatibilityEnabled: value }, true)
+      }
+    },
+
+    // Kroki + Diagram sizing options should apply live
+    enableKroki: function (value, oldValue) {
+      const { editor } = this
+      if (value !== oldValue && editor) {
+        editor.setOptions({ enableKroki: value }, true)
+      }
+    },
+    krokiServerUrl: function (value, oldValue) {
+      const { editor } = this
+      if (value !== oldValue && editor) {
+        editor.setOptions({ krokiServerUrl: value }, true)
+      }
+    },
+    krokiTimeoutMs: function (value, oldValue) {
+      const { editor } = this
+      if (value !== oldValue && editor) {
+        editor.setOptions({ krokiTimeoutMs: value }, true)
+      }
+    },
+    diagramExactSize: function (value, oldValue) {
+      const { editor } = this
+      if (value !== oldValue && editor) {
+        editor.setOptions({ diagramExactSize: value }, true)
       }
     },
 
@@ -534,7 +566,11 @@ export default {
         imageAction: this.imageAction.bind(this),
         imagePathPicker: this.imagePathPicker.bind(this),
         clipboardFilePath: guessClipboardFilePath,
-        imagePathAutoComplete: this.imagePathAutoComplete.bind(this)
+        imagePathAutoComplete: this.imagePathAutoComplete.bind(this),
+        enableKroki: this.preferences.enableKroki,
+        krokiServerUrl: this.preferences.krokiServerUrl,
+        krokiTimeoutMs: this.preferences.krokiTimeoutMs,
+        diagramExactSize: this.preferences.diagramExactSize
       }
 
       if (/dark/i.test(theme)) {

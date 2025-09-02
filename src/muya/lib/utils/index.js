@@ -368,6 +368,112 @@ export const sanitize = (html, purifyOptions, disableHtml) => {
   }
 }
 
+/**
+ * Sanitize raw HTML/SVG without pre-escaping style/script/title tags.
+ * Use only for trusted, well-formed inputs like SVGs returned by Kroki
+ * where we rely on DOMPurify configuration to remove unsafe content.
+ */
+export const sanitizeRaw = (html, purifyOptions) => {
+  return runSanitize(html, purifyOptions)
+}
+
+/**
+ * Make Kroki/renderer SVG responsive: strip fixed width/height, set max-width:100%,
+ * and ensure viewBox/preserveAspectRatio are present to avoid distorted sizing.
+ *
+ * @param {string} svg Raw SVG markup
+ * @returns {string} Modified SVG markup
+ */
+export const makeSvgResponsive = (svg) => {
+  if (typeof svg !== 'string') return svg
+  // Remove fixed width/height so the SVG can scale down, but never upscale beyond natural size.
+  // Also center the diagram within the container.
+  let measured = { w: null, h: null }
+  const stripSizeAttrs = (a) => a
+    .replace(/\swidth=("[^"]*"|'[^']*'|[^\s>]+)/ig, '')
+    .replace(/\sheight=("[^"]*"|'[^']*'|[^\s>]+)/ig, '')
+
+  let out = svg.replace(/<svg\b([^>]*?)>/i, (m, attrs) => {
+    const widthMatch = attrs.match(/\swidth=("([^"]*)"|'([^']*)'|([^\s>]+))/i)
+    const heightMatch = attrs.match(/\sheight=("([^"]*)"|'([^']*)'|([^\s>]+))/i)
+    const parseNum = v => {
+      if (!v) return null
+      const num = String(v).trim().replace(/px$/i, '')
+      const f = parseFloat(num)
+      return isNaN(f) ? null : f
+    }
+    // width/height attributes
+    measured.w = parseNum(widthMatch && (widthMatch[2] || widthMatch[3] || widthMatch[4]))
+    measured.h = parseNum(heightMatch && (heightMatch[2] || heightMatch[3] || heightMatch[4]))
+
+    // inline style width/height if not present as attributes
+    if (!(measured.w && measured.h)) {
+      const styleMatch = attrs.match(/\sstyle=("([^"]*)"|'([^']*)')/i)
+      const style = styleMatch ? (styleMatch[2] || styleMatch[3] || '') : ''
+      if (style) {
+        const sw = /(?:^|;)\s*width\s*:\s*([0-9.]+)px/i.exec(style)
+        const sh = /(?:^|;)\s*height\s*:\s*([0-9.]+)px/i.exec(style)
+        if (!measured.w && sw) measured.w = parseNum(sw[1])
+        if (!measured.h && sh) measured.h = parseNum(sh[1])
+      }
+    }
+
+    // viewBox fallback
+    if (!(measured.w && measured.h)) {
+      const vbMatch = attrs.match(/\bviewBox\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/i)
+      const vbStr = vbMatch && (vbMatch[2] || vbMatch[3] || vbMatch[4])
+      if (vbStr) {
+        const vb = vbStr.split(/\s+/).map(n => parseNum(n))
+        if (vb.length === 4 && vb[2] && vb[3]) {
+          measured.w = measured.w || vb[2]
+          measured.h = measured.h || vb[3]
+        }
+      }
+    }
+
+    // Drop existing width/height attributes for responsiveness
+    let a = stripSizeAttrs(attrs)
+
+    // Ensure viewBox exists (try to infer from measured width/height)
+    if (!/\bviewBox\b/i.test(a)) {
+      if (measured.w && measured.h) {
+        a += ` viewBox="0 0 ${measured.w} ${measured.h}"`
+      }
+    }
+    // Ensure preserveAspectRatio for proper scaling
+    if (!/\bpreserveAspectRatio\b/i.test(a)) {
+      a += ' preserveAspectRatio="xMidYMid meet"'
+    }
+    // Add inline style to scale down to container width but not scale up; center with margin auto
+    const targetStyle = [
+      'width: 100%',
+      measured.w ? `max-width: ${measured.w}px` : null,
+      'height: auto',
+      'display: block',
+      'margin: 0 auto'
+    ].filter(Boolean).join(';') + ';'
+
+    if (!/\bstyle\b/i.test(a)) {
+      a += ` style="${targetStyle}"`
+    } else {
+      a = a.replace(/style=("|')([^"']*)(\1)/i, (sm, q, s) => {
+        const ensure = (prop, val) => (new RegExp(`${prop}\\s*:`, 'i').test(s) ? '' : `${prop}: ${val};`)
+        let merged = s
+        merged = ensure('width', '100%') + merged
+        if (measured.w) {
+          merged = ensure('max-width', `${measured.w}px`) + merged
+        }
+        merged = ensure('height', 'auto') + merged
+        merged = ensure('display', 'block') + merged
+        merged = ensure('margin', '0 auto') + merged
+        return `style=${q}${merged}${q}`
+      })
+    }
+    return `<svg${a}>`
+  })
+  return out
+}
+
 export const getParagraphReference = (ele, id) => {
   const { x, y, left, top, bottom, height } = ele.getBoundingClientRect()
   return {

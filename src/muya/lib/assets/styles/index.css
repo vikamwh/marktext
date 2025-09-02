@@ -750,11 +750,17 @@ pre.ag-active.ag-fence-code::after {
 
 figure.ag-container-block div.ag-container-preview {
   width: 100%;
-  text-align: center;
+  text-align: center; /* center inline-block or block SVGs */
 }
 
-figure.ag-container-block div.ag-container-preview > svg {
-  width: 100%;
+/* Do not force width here; let inline styles from makeSvgResponsive control sizing */
+
+/* When user wants exact size, don’t force SVG to fill width */
+figure.ag-container-block div.ag-container-preview.ag-diagram-exact-size > svg {
+  width: auto;
+  max-width: none;
+  height: auto;
+  display: inline-block;
 }
 
 figure.ag-active.ag-container-block > div.ag-container-preview {

@@ -4,6 +4,7 @@ process.env.BABEL_ENV = 'renderer'
 
 const path = require('path')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+const webpack = require('webpack')
 const postcssPresetEnv = require('postcss-preset-env')
 
 /** @type {import('webpack').Configuration} */
@@ -87,6 +88,10 @@ module.exports = {
       // Options similar to the same options in webpackOptions.output
       // both options are optional
       filename: 'index.min.css'
+    }),
+    // Provide Buffer polyfill for browser build
+    new webpack.ProvidePlugin({
+      Buffer: ['buffer', 'Buffer']
     })
   ],
   output: {
@@ -102,7 +107,12 @@ module.exports = {
     extensions: ['.js', '.vue', '.json', '.css', '.node'],
     fallback: {
       fs: false,
-      path: require.resolve('path-browserify')
+  path: require.resolve('path-browserify'),
+  zlib: require.resolve('browserify-zlib'),
+  buffer: require.resolve('buffer/'),
+  assert: require.resolve('assert/'),
+  stream: require.resolve('stream-browserify'),
+  util: require.resolve('util/')
     }
   }
 }

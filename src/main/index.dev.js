@@ -7,14 +7,14 @@
 /* eslint-disable */
 require('dotenv').config()
 
-// Install `vue-devtools`
+// Install `vue-devtools` (optional). Enable by setting ENABLE_VUE_DEVTOOLS=1.
 require('electron').app.on('ready', () => {
-  const { default: installExtension, VUEJS_DEVTOOLS } = require('electron-devtools-installer')
-  installExtension(VUEJS_DEVTOOLS)
-    .then(() => {})
-    .catch(err => {
-      console.log('Unable to install `vue-devtools`: \n', err)
-    })
+  if (process.env.ENABLE_VUE_DEVTOOLS === '1') {
+    const { default: installExtension, VUEJS_DEVTOOLS } = require('electron-devtools-installer')
+    installExtension(VUEJS_DEVTOOLS)
+      .then(() => {})
+      .catch(() => { /* ignore devtools install errors in dev */ })
+  }
 })
 
 /* eslint-enable */

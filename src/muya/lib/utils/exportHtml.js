@@ -8,8 +8,8 @@ import exportStyle from '../assets/styles/exportStyle.css'
 import highlightCss from 'prismjs/themes/prism.css'
 import katexCss from 'katex/dist/katex.css'
 import footerHeaderCss from '../assets/styles/headerFooterStyle.css'
-import { EXPORT_DOMPURIFY_CONFIG } from '../config'
-import { sanitize, unescapeHTML } from '../utils'
+import { EXPORT_DOMPURIFY_CONFIG, DIAGRAM_DOMPURIFY_CONFIG } from '../config'
+import { sanitize, sanitizeRaw, unescapeHTML, makeSvgResponsive } from '../utils'
 import { validEmoji } from '../ui/emojis'
 
 export const getSanitizeHtml = (markdown, options) => {
@@ -35,6 +35,31 @@ class ExportHtml {
 
   async renderMermaid () {
     const codes = this.exportContainer.querySelectorAll('code.language-mermaid')
+    // Try Kroki first if enabled
+    let kroki
+    const useKroki = !!(this.muya && this.muya.options && this.muya.options.enableKroki && this.muya.options.krokiServerUrl)
+    if (useKroki) {
+      try { kroki = await import('../parser/render/kroki') } catch (_) {}
+    }
+
+    if (useKroki && kroki && kroki.isKrokiSupported('mermaid')) {
+      for (const code of codes) {
+        const raw = unescapeHTML(code.innerHTML)
+        const preEle = code.parentNode
+        const container = document.createElement('div')
+        try {
+          const svg = await kroki.renderKrokiToSvg(this.muya.options.krokiServerUrl, 'mermaid', raw, { timeoutMs: this.muya.options.krokiTimeoutMs })
+          const processed = this.muya.options.diagramExactSize ? svg : makeSvgResponsive(svg)
+          container.innerHTML = sanitizeRaw(processed, DIAGRAM_DOMPURIFY_CONFIG)
+        } catch (err) {
+          container.textContent = '< Invalid Mermaid or Kroki error >'
+        }
+        preEle.replaceWith(container)
+      }
+      return
+    }
+
+    // Fallback to local Mermaid library
     for (const code of codes) {
       const preEle = code.parentNode
       const mermaidContainer = document.createElement('div')
@@ -64,6 +89,14 @@ class ExportHtml {
       sequence: await loadRenderer('sequence'),
       plantuml: await loadRenderer('plantuml'),
       'vega-lite': await loadRenderer('vega-lite')
+    }
+    // Try to use Kroki if enabled in Muya options
+    let kroki
+    const useKroki = !!(this.muya && this.muya.options && this.muya.options.enableKroki && this.muya.options.krokiServerUrl)
+    if (useKroki) {
+      try {
+        kroki = await import('../parser/render/kroki')
+      } catch (_) {}
     }
     const codes = this.exportContainer.querySelectorAll(selector)
     for (const code of codes) {
@@ -95,22 +128,37 @@ class ExportHtml {
           theme: 'latimes' // only render light theme
         })
       }
-      try {
-        if (functionType === 'flowchart' || functionType === 'sequence') {
-          const diagram = render.parse(rawCode)
-          diagramContainer.innerHTML = ''
-          diagram.drawSVG(diagramContainer, options)
+      let rendered = false
+      // Prefer Kroki
+      if (useKroki && kroki && kroki.isKrokiSupported(functionType)) {
+        try {
+          const svg = await kroki.renderKrokiToSvg(this.muya.options.krokiServerUrl, functionType, rawCode, { timeoutMs: this.muya.options.krokiTimeoutMs })
+          const processed = this.muya.options.diagramExactSize ? svg : makeSvgResponsive(svg)
+          diagramContainer.innerHTML = sanitizeRaw(processed, DIAGRAM_DOMPURIFY_CONFIG)
+          rendered = true
+        } catch (_) {
+          // Do not fallback if Kroki is enabled
+          rendered = true
+          diagramContainer.innerHTML = '< Invalid Diagram or Kroki error >'
         }
-        if (functionType === 'plantuml') {
-          const diagram = render.parse(rawCode)
-          diagramContainer.innerHTML = ''
-          diagram.insertImgElement(diagramContainer)
+      }
+
+      if (!rendered) {
+        try {
+          if (functionType === 'flowchart' || functionType === 'sequence') {
+            const diagram = render.parse(rawCode)
+            diagramContainer.innerHTML = ''
+            diagram.drawSVG(diagramContainer, options)
+          } else if (functionType === 'plantuml') {
+            const diagram = render.parse(rawCode)
+            diagramContainer.innerHTML = ''
+            diagram.insertImgElement(diagramContainer)
+          } else if (functionType === 'vega-lite') {
+            await render(diagramContainer, JSON.parse(rawCode), options)
+          }
+        } catch (err) {
+          diagramContainer.innerHTML = '< Invalid Diagram >'
         }
-        if (functionType === 'vega-lite') {
-          await render(diagramContainer, JSON.parse(rawCode), options)
-        }
-      } catch (err) {
-        diagramContainer.innerHTML = '< Invalid Diagram >'
       }
     }
   }

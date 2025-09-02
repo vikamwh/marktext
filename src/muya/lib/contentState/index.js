@@ -226,6 +226,9 @@ class ContentState {
     const activeBlocks = this.getActiveBlocks()
     if (clearCache) {
       this.stateRender.tokenCache.clear()
+      // Also clear diagram caches to force regeneration with new options (e.g., Kroki URL)
+      this.stateRender.mermaidCache.clear()
+      this.stateRender.diagramCache.clear()
     }
     matches.forEach((m, i) => {
       m.active = i === index

@@ -2,12 +2,25 @@ import fs from 'fs'
 import path from 'path'
 import EventEmitter from 'events'
 import { BrowserWindow, ipcMain, dialog } from 'electron'
-import keytar from 'keytar'
-import schema from './schema'
 import Store from 'electron-store'
 import log from 'electron-log'
+import schema from './schema'
 import { ensureDirSync } from 'common/filesystem'
 import { IMAGE_EXTENSIONS } from 'common/filesystem/paths'
+
+// keytar is an optional native dependency; require once at module load time
+// eslint-disable-next-line node/global-require
+const keytar = (() => {
+  try {
+    // eslint-disable-next-line import/no-extraneous-dependencies
+    return require('keytar')
+  } catch (e) {
+    if (log && typeof log.warn === 'function') {
+      log.warn('Keytar not available, secure storage disabled.', e && e.message)
+    }
+    return null
+  }
+})()
 
 const DATA_CENTER_NAME = 'dataCenter'
 
@@ -56,8 +69,8 @@ class DataCenter extends EventEmitter {
     const { serviceName, encryptKeys } = this
     const data = this.store.store
     try {
-      const encryptData = await Promise.all(encryptKeys.map(key => {
-        return keytar.getPassword(serviceName, key)
+      const encryptData = await Promise.all(encryptKeys.map(k => {
+        return keytar ? keytar.getPassword(serviceName, k) : Promise.resolve(null)
       }))
       const encryptObj = encryptKeys.reduce((acc, k, i) => {
         return {
@@ -110,7 +123,7 @@ class DataCenter extends EventEmitter {
   getItem (key) {
     const { encryptKeys, serviceName } = this
     if (encryptKeys.includes(key)) {
-      return keytar.getPassword(serviceName, key)
+      return keytar ? keytar.getPassword(serviceName, key) : Promise.resolve(null)
     } else {
       const value = this.store.get(key)
       return Promise.resolve(value)
@@ -125,7 +138,11 @@ class DataCenter extends EventEmitter {
     ipcMain.emit('broadcast-user-data-changed', { [key]: value })
     if (encryptKeys.includes(key)) {
       try {
-        return await keytar.setPassword(serviceName, key, value)
+        if (keytar) {
+          return await keytar.setPassword(serviceName, key, value)
+        }
+        // If keytar is unavailable, store nothing but keep app running
+        return null
       } catch (err) {
         log.error('Keytar error:', err)
       }
