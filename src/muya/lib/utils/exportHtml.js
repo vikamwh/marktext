@@ -9,7 +9,7 @@ import highlightCss from 'prismjs/themes/prism.css'
 import katexCss from 'katex/dist/katex.css'
 import footerHeaderCss from '../assets/styles/headerFooterStyle.css'
 import { EXPORT_DOMPURIFY_CONFIG, DIAGRAM_DOMPURIFY_CONFIG } from '../config'
-import { sanitize, sanitizeRaw, unescapeHTML, makeSvgResponsive } from '../utils'
+import { sanitize, sanitizeRaw, unescapeHTML } from '../utils'
 import { validEmoji } from '../ui/emojis'
 
 export const getSanitizeHtml = (markdown, options) => {
@@ -49,8 +49,7 @@ class ExportHtml {
         const container = document.createElement('div')
         try {
           const svg = await kroki.renderKrokiToSvg(this.muya.options.krokiServerUrl, 'mermaid', raw, { timeoutMs: this.muya.options.krokiTimeoutMs })
-          const processed = this.muya.options.diagramExactSize ? svg : makeSvgResponsive(svg)
-          container.innerHTML = sanitizeRaw(processed, DIAGRAM_DOMPURIFY_CONFIG)
+          container.innerHTML = sanitizeRaw(svg, DIAGRAM_DOMPURIFY_CONFIG)
         } catch (err) {
           container.textContent = '< Invalid Mermaid or Kroki error >'
         }
@@ -133,8 +132,7 @@ class ExportHtml {
       if (useKroki && kroki && kroki.isKrokiSupported(functionType)) {
         try {
           const svg = await kroki.renderKrokiToSvg(this.muya.options.krokiServerUrl, functionType, rawCode, { timeoutMs: this.muya.options.krokiTimeoutMs })
-          const processed = this.muya.options.diagramExactSize ? svg : makeSvgResponsive(svg)
-          diagramContainer.innerHTML = sanitizeRaw(processed, DIAGRAM_DOMPURIFY_CONFIG)
+          diagramContainer.innerHTML = sanitizeRaw(svg, DIAGRAM_DOMPURIFY_CONFIG)
           rendered = true
         } catch (_) {
           // Do not fallback if Kroki is enabled

@@ -170,7 +170,6 @@ export default {
       enableKroki: state => state.preferences.enableKroki,
       krokiServerUrl: state => state.preferences.krokiServerUrl,
       krokiTimeoutMs: state => state.preferences.krokiTimeoutMs,
-      diagramExactSize: state => state.preferences.diagramExactSize,
 
       currentFile: state => state.editor.currentFile,
       projectTree: state => state.project.projectTree,
@@ -324,12 +323,6 @@ export default {
       const { editor } = this
       if (value !== oldValue && editor) {
         editor.setOptions({ krokiTimeoutMs: value }, true)
-      }
-    },
-    diagramExactSize: function (value, oldValue) {
-      const { editor } = this
-      if (value !== oldValue && editor) {
-        editor.setOptions({ diagramExactSize: value }, true)
       }
     },
 
@@ -569,8 +562,7 @@ export default {
         imagePathAutoComplete: this.imagePathAutoComplete.bind(this),
         enableKroki: this.preferences.enableKroki,
         krokiServerUrl: this.preferences.krokiServerUrl,
-        krokiTimeoutMs: this.preferences.krokiTimeoutMs,
-        diagramExactSize: this.preferences.diagramExactSize
+        krokiTimeoutMs: this.preferences.krokiTimeoutMs
       }
 
       if (/dark/i.test(theme)) {

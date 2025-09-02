@@ -20,11 +20,6 @@
     "minimum": 0,
     "default": 5000
   },
-  "diagramExactSize": {
-    "description": "Markdown--Keep exact diagram size from renderer/Kroki.",
-    "type": "boolean",
-    "default": true
-  },
   "autoSaveDelay": {
     "description": "General--The time in ms after a change that the file is saved.",
     "type": "number",

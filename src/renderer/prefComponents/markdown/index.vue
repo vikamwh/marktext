@@ -113,12 +113,6 @@
           :defaultValue="'5000'"
           :regexValidator="/^(?:\d+)$|^$/"
         ></text-box>
-        <bool
-          description="Kroki: Keep exact diagram size (no responsive scaling)"
-          notes="Applies only to Kroki-rendered diagrams. Keeps SVG width/height/preserveAspectRatio as returned by Kroki."
-          :bool="diagramExactSize"
-          :onChange="value => onSelectChange('diagramExactSize', value)"
-        ></bool>
       </template>
     </compound>
 
@@ -187,8 +181,7 @@ export default {
       sequenceTheme: state => state.preferences.sequenceTheme,
       enableKroki: state => state.preferences.enableKroki,
       krokiServerUrl: state => state.preferences.krokiServerUrl,
-      krokiTimeoutMs: state => state.preferences.krokiTimeoutMs,
-      diagramExactSize: state => state.preferences.diagramExactSize
+      krokiTimeoutMs: state => state.preferences.krokiTimeoutMs
     })
   },
   methods: {

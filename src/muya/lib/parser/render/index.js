@@ -1,6 +1,6 @@
 import loadRenderer from '../../renderers'
 import { CLASS_OR_ID, DIAGRAM_DOMPURIFY_CONFIG } from '../../config'
-import { conflict, mixins, camelToSnake, sanitizeRaw, makeSvgResponsive, escapeHtmlTags } from '../../utils'
+import { conflict, mixins, camelToSnake, sanitizeRaw, escapeHtmlTags } from '../../utils'
 import { patch, toVNode, toHTML, h } from './snabbdom'
 import { beginRules } from '../rules'
 import renderInlines from './renderInlines'
@@ -120,14 +120,8 @@ class StateRender {
         try {
           if (useKroki && kroki && kroki.isKrokiSupported('mermaid')) {
             const svg = await kroki.renderKrokiToSvg(this.muya.options.krokiServerUrl, 'mermaid', code, { timeoutMs: this.muya.options.krokiTimeoutMs })
-            const processed = this.muya.options.diagramExactSize ? svg : makeSvgResponsive(svg)
-            // Exact-size setting applies only to Kroki diagrams
-            if (this.muya.options.diagramExactSize) {
-              target.classList.add('ag-diagram-exact-size')
-            } else {
-              target.classList.remove('ag-diagram-exact-size')
-            }
-            target.innerHTML = sanitizeRaw(processed, DIAGRAM_DOMPURIFY_CONFIG)
+            target.classList.add('ag-diagram-exact-size')
+            target.innerHTML = sanitizeRaw(svg, DIAGRAM_DOMPURIFY_CONFIG)
           } else {
             // Local Mermaid rendering
             // Ensure mermaid is loaded if not already
@@ -138,7 +132,7 @@ class StateRender {
                 theme: this.muya.options.mermaidTheme
               })
             }
-            // Do not apply exact-size class to local renders
+            // Local render: keep responsive defaults for non-Kroki
             target.classList.remove('ag-diagram-exact-size')
             // Render via a mermaid container so Mermaid transforms it into SVG
             const containerHtml = `<div class="mermaid">${escapeHtmlTags(code)}</div>`
@@ -196,13 +190,8 @@ class StateRender {
           if (useKroki && kroki && kroki.isKrokiSupported(functionType)) {
             target.innerHTML = 'Loading...'
             const svg = await kroki.renderKrokiToSvg(krokiServer, functionType, code, { timeoutMs: this.muya.options.krokiTimeoutMs })
-            const processed = this.muya.options.diagramExactSize ? svg : makeSvgResponsive(svg)
-            if (this.muya.options.diagramExactSize) {
-              target.classList.add('ag-diagram-exact-size')
-            } else {
-              target.classList.remove('ag-diagram-exact-size')
-            }
-            target.innerHTML = sanitizeRaw(processed, DIAGRAM_DOMPURIFY_CONFIG)
+            target.classList.add('ag-diagram-exact-size')
+            target.innerHTML = sanitizeRaw(svg, DIAGRAM_DOMPURIFY_CONFIG)
           } else if (functionType === 'flowchart' || functionType === 'sequence') {
             const render = await loadRenderer(functionType)
             // Exact-size toggle is Kroki-only
