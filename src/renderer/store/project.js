@@ -82,7 +82,7 @@ const actions = {
         showSideBar: true,
         showTabBar: true
       })
-      dispatch('SET_LAYOUT_MENU_ITEM')
+      dispatch('DISPATCH_LAYOUT_MENU_ITEMS')
     })
   },
   LISTEN_FOR_UPDATE_PROJECT ({ commit, state, dispatch }) {
@@ -140,7 +140,7 @@ const actions = {
     })
     bus.$on('SIDEBAR::remove', () => {
       const { pathname } = state.activeItem
-      shell.trashItem(pathname).catch(err => {
+      ipcRenderer.invoke('mt::fs-trash-item', pathname).catch(err => {
         notice.notify({
           title: 'Error while deleting',
           type: 'error',
