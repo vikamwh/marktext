@@ -753,7 +753,7 @@ figure.ag-container-block div.ag-container-preview {
   text-align: center; /* center inline-block or block SVGs */
 }
 
-/* Do not force width here; let inline styles from makeSvgResponsive control sizing */
+/* Do not force width here; sizing is controlled by the embedded SVG's own styles or attributes */
 
 /* When user wants exact size, don’t force SVG to fill width */
 figure.ag-container-block div.ag-container-preview.ag-diagram-exact-size > svg {

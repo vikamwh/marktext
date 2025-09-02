@@ -107,12 +107,12 @@ module.exports = {
     extensions: ['.js', '.vue', '.json', '.css', '.node'],
     fallback: {
       fs: false,
-  path: require.resolve('path-browserify'),
-  zlib: require.resolve('browserify-zlib'),
-  buffer: require.resolve('buffer/'),
-  assert: require.resolve('assert/'),
-  stream: require.resolve('stream-browserify'),
-  util: require.resolve('util/')
+      path: require.resolve('path-browserify'),
+      zlib: require.resolve('browserify-zlib'),
+      buffer: require.resolve('buffer/'),
+      assert: require.resolve('assert/'),
+      stream: require.resolve('stream-browserify'),
+      util: require.resolve('util/')
     }
   }
 }

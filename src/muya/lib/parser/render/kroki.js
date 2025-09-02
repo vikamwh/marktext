@@ -1,6 +1,7 @@
 // Simple Kroki client to render diagrams to SVG
-// API: POST { serverUrl }/render with JSON body
-// { diagram_source: string, diagram_type: string, output_format: 'svg' }
+// API: POST {serverUrl}/{diagramType}/svg with raw text body (diagram source)
+// - Content-Type: text/plain
+// - Accept: image/svg+xml
 
 const TYPE_MAP = {
   mermaid: 'mermaid',
