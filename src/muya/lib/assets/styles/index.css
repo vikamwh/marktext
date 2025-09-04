@@ -315,6 +315,30 @@ span.ag-math > .ag-math-render.ag-math-error {
   font-family: monospace;
 }
 
+/* Diagram error and loading states */
+.ag-diagram-error {
+  color: var(--deleteColor);
+  font-size: 14px;
+  font-style: italic;
+  font-family: monospace;
+  padding: 8px;
+  border: 1px dashed var(--deleteColor);
+  border-radius: 4px;
+  background-color: rgba(255, 0, 0, 0.05);
+  display: block;
+  text-align: center;
+}
+
+.ag-diagram-loading {
+  color: var(--editorColor);
+  font-size: 14px;
+  font-style: italic;
+  font-family: monospace;
+  padding: 8px;
+  text-align: center;
+  display: block;
+}
+
 /* (Preview) math block */
 /* TODO: DOM path should be wrong. Correct path should be: 'ag-container-preview > .katex-display'. */
 .ag-math > .ag-math-render .katex-display {

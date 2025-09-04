@@ -2,7 +2,6 @@ import marked from '../parser/marked'
 import Prism from 'prismjs'
 import katex from 'katex'
 import 'katex/dist/contrib/mhchem.min.js'
-import loadRenderer from '../renderers'
 import githubMarkdownCss from 'github-markdown-css/github-markdown.css'
 import exportStyle from '../assets/styles/exportStyle.css'
 import highlightCss from 'prismjs/themes/prism.css'
@@ -35,68 +34,60 @@ class ExportHtml {
 
   async renderMermaid () {
     const codes = this.exportContainer.querySelectorAll('code.language-mermaid')
-    // Try Kroki first if enabled
+    // Always use Kroki for HTML export
     let kroki
-    const useKroki = !!(this.muya && this.muya.options && this.muya.options.enableKroki && this.muya.options.krokiServerUrl)
-    if (useKroki) {
-      try { kroki = await import('../parser/render/kroki') } catch (_) {}
-    }
+    const krokiServerUrl = this.muya?.options?.krokiServerUrl || 'http://localhost:8000'
 
-    if (useKroki && kroki && kroki.isKrokiSupported('mermaid')) {
+    try {
+      kroki = await import('../parser/render/kroki')
+    } catch (error) {
+      // Show error message if Kroki cannot be loaded
       for (const code of codes) {
-        const raw = unescapeHTML(code.innerHTML)
         const preEle = code.parentNode
         const container = document.createElement('div')
-        try {
-          const svg = await kroki.renderKrokiToSvg(this.muya.options.krokiServerUrl, 'mermaid', raw, { timeoutMs: this.muya.options.krokiTimeoutMs })
-          container.innerHTML = sanitizeRaw(svg, DIAGRAM_DOMPURIFY_CONFIG)
-        } catch (err) {
-          container.textContent = '< Invalid Mermaid or Kroki error >'
-        }
+        container.innerHTML = '<p style="color: red;">Error: Cannot load Kroki module for Mermaid rendering</p>'
         preEle.replaceWith(container)
       }
       return
     }
 
-    // Fallback to local Mermaid library
     for (const code of codes) {
+      const raw = unescapeHTML(code.innerHTML)
       const preEle = code.parentNode
-      const mermaidContainer = document.createElement('div')
-      mermaidContainer.innerHTML = sanitize(unescapeHTML(code.innerHTML), EXPORT_DOMPURIFY_CONFIG, true)
-      mermaidContainer.classList.add('mermaid')
-      preEle.replaceWith(mermaidContainer)
-    }
-    const mermaid = await loadRenderer('mermaid')
-    // We only export light theme, so set mermaid theme to `default`, in the future, we can choose whick theme to export.
-    mermaid.initialize({
-      securityLevel: 'strict',
-      theme: 'default'
-    })
-    mermaid.init(undefined, this.exportContainer.querySelectorAll('div.mermaid'))
-    if (this.muya) {
-      mermaid.initialize({
-        securityLevel: 'strict',
-        theme: this.muya.options.mermaidTheme
-      })
+      const container = document.createElement('div')
+      try {
+        const svg = await kroki.renderKrokiToSvg(krokiServerUrl, 'mermaid', raw, {
+          timeoutMs: this.muya?.options?.krokiTimeoutMs || 5000
+        })
+        container.innerHTML = sanitizeRaw(svg, DIAGRAM_DOMPURIFY_CONFIG)
+      } catch (err) {
+        container.innerHTML = `<p style="color: red; font-family: monospace;">Mermaid Error: ${err.message}</p>`
+      }
+      preEle.replaceWith(container)
     }
   }
 
   async renderDiagram () {
     const selector = 'code.language-vega-lite, code.language-flowchart, code.language-sequence, code.language-plantuml'
-    const RENDER_MAP = {
-      flowchart: await loadRenderer('flowchart'),
-      sequence: await loadRenderer('sequence'),
-      plantuml: await loadRenderer('plantuml'),
-      'vega-lite': await loadRenderer('vega-lite')
-    }
-    // Try to use Kroki if enabled in Muya options
+
+    // Always use Kroki for HTML export
     let kroki
-    const useKroki = !!(this.muya && this.muya.options && this.muya.options.enableKroki && this.muya.options.krokiServerUrl)
-    if (useKroki) {
-      try {
-        kroki = await import('../parser/render/kroki')
-      } catch (_) {}
+    const krokiServerUrl = this.muya?.options?.krokiServerUrl || 'http://localhost:8000'
+
+    try {
+      kroki = await import('../parser/render/kroki')
+    } catch (error) {
+      // Show error message if Kroki cannot be loaded
+      const codes = this.exportContainer.querySelectorAll(selector)
+      for (const code of codes) {
+        const preParent = code.parentNode
+        const container = document.createElement('div')
+        container.innerHTML = '<p style="color: red;">Error: Cannot load Kroki module for diagram rendering</p>'
+        preParent.replaceWith(container)
+      }
+      return
     }
+
     const codes = this.exportContainer.querySelectorAll(selector)
     for (const code of codes) {
       const rawCode = unescapeHTML(code.innerHTML)
@@ -111,52 +102,29 @@ class ExportHtml {
           return 'vega-lite'
         }
       })()
-      const render = RENDER_MAP[functionType]
+
       const preParent = code.parentNode
       const diagramContainer = document.createElement('div')
       diagramContainer.classList.add(functionType)
       preParent.replaceWith(diagramContainer)
-      const options = {}
-      if (functionType === 'sequence') {
-        Object.assign(options, { theme: this.muya.options.sequenceTheme })
-      } else if (functionType === 'vega-lite') {
-        Object.assign(options, {
-          actions: false,
-          tooltip: false,
-          renderer: 'svg',
-          theme: 'latimes' // only render light theme
-        })
-      }
-      let rendered = false
-      // Prefer Kroki
-      if (useKroki && kroki && kroki.isKrokiSupported(functionType)) {
-        try {
-          const svg = await kroki.renderKrokiToSvg(this.muya.options.krokiServerUrl, functionType, rawCode, { timeoutMs: this.muya.options.krokiTimeoutMs })
-          diagramContainer.innerHTML = sanitizeRaw(svg, DIAGRAM_DOMPURIFY_CONFIG)
-          rendered = true
-        } catch (_) {
-          // Do not fallback if Kroki is enabled
-          rendered = true
-          diagramContainer.innerHTML = '< Invalid Diagram or Kroki error >'
-        }
-      }
 
-      if (!rendered) {
-        try {
-          if (functionType === 'flowchart' || functionType === 'sequence') {
-            const diagram = render.parse(rawCode)
-            diagramContainer.innerHTML = ''
-            diagram.drawSVG(diagramContainer, options)
-          } else if (functionType === 'plantuml') {
-            const diagram = render.parse(rawCode)
-            diagramContainer.innerHTML = ''
-            diagram.insertImgElement(diagramContainer)
-          } else if (functionType === 'vega-lite') {
-            await render(diagramContainer, JSON.parse(rawCode), options)
-          }
-        } catch (err) {
-          diagramContainer.innerHTML = '< Invalid Diagram >'
+      try {
+        if (!kroki.isKrokiSupported(functionType)) {
+          diagramContainer.innerHTML = `<p style="color: red; font-family: monospace;">Diagram type '${functionType}' not supported by Kroki</p>`
+          continue
         }
+
+        const svg = await kroki.renderKrokiToSvg(krokiServerUrl, functionType, rawCode, {
+          timeoutMs: this.muya?.options?.krokiTimeoutMs || 5000
+        })
+        diagramContainer.innerHTML = sanitizeRaw(svg, DIAGRAM_DOMPURIFY_CONFIG)
+      } catch (err) {
+        const friendlyType = functionType === 'vega-lite'
+          ? 'Vega-Lite'
+          : functionType === 'plantuml'
+            ? 'PlantUML'
+            : functionType.charAt(0).toUpperCase() + functionType.slice(1)
+        diagramContainer.innerHTML = `<p style="color: red; font-family: monospace;">${friendlyType} Error: ${err.message}</p>`
       }
     }
   }

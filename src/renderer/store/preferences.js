@@ -53,8 +53,7 @@ const state = {
   isGitlabCompatibilityEnabled: false,
   sequenceTheme: 'hand',
 
-  // Kroki integration
-  enableKroki: false,
+  // Kroki integration (always enabled)
   krokiServerUrl: 'http://localhost:8000',
   krokiTimeoutMs: 5000,
 

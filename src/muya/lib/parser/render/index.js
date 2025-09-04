@@ -1,6 +1,5 @@
-import loadRenderer from '../../renderers'
 import { CLASS_OR_ID, DIAGRAM_DOMPURIFY_CONFIG } from '../../config'
-import { conflict, mixins, camelToSnake, sanitizeRaw, escapeHtmlTags } from '../../utils'
+import { conflict, mixins, camelToSnake, sanitizeRaw } from '../../utils'
 import { patch, toVNode, toHTML, h } from './snabbdom'
 import { beginRules } from '../rules'
 import renderInlines from './renderInlines'
@@ -97,20 +96,25 @@ class StateRender {
 
   async renderMermaid () {
     if (this.mermaidCache.size) {
-      // Try Kroki first if enabled and load Mermaid only when needed.
+      // Always use Kroki - no local fallback
       let kroki
-      const useKroki = !!(this.muya.options && this.muya.options.enableKroki && this.muya.options.krokiServerUrl)
-      if (useKroki) {
-        try { kroki = await import('./kroki') } catch (_) {}
+      const krokiServerUrl = this.muya.options?.krokiServerUrl || 'http://localhost:8000'
+      try {
+        kroki = await import('./kroki')
+      } catch (error) {
+        console.error('Failed to load Kroki module:', error)
+        // Show error for all cached items
+        for (const [key] of this.mermaidCache.entries()) {
+          const target = document.querySelector(key)
+          if (target) {
+            target.innerHTML = '<span class="ag-diagram-error">Error: Cannot load Kroki module</span>'
+            target.classList.add(CLASS_OR_ID.AG_MATH_ERROR)
+          }
+        }
+        this.mermaidCache.clear()
+        return
       }
-      let mermaid
-      if (!useKroki || !kroki || !kroki.isKrokiSupported('mermaid')) {
-        mermaid = await loadRenderer('mermaid')
-        mermaid.initialize({
-          securityLevel: 'strict',
-          theme: this.muya.options.mermaidTheme
-        })
-      }
+
       for (const [key, value] of this.mermaidCache.entries()) {
         const { code } = value
         const target = document.querySelector(key)
@@ -118,32 +122,16 @@ class StateRender {
           continue
         }
         try {
-          if (useKroki && kroki && kroki.isKrokiSupported('mermaid')) {
-            const svg = await kroki.renderKrokiToSvg(this.muya.options.krokiServerUrl, 'mermaid', code, { timeoutMs: this.muya.options.krokiTimeoutMs })
-            target.classList.add('ag-diagram-exact-size')
-            target.innerHTML = sanitizeRaw(svg, DIAGRAM_DOMPURIFY_CONFIG)
-          } else {
-            // Local Mermaid rendering
-            // Ensure mermaid is loaded if not already
-            if (!mermaid) {
-              mermaid = await loadRenderer('mermaid')
-              mermaid.initialize({
-                securityLevel: 'strict',
-                theme: this.muya.options.mermaidTheme
-              })
-            }
-            // Local render: keep responsive defaults for non-Kroki
-            target.classList.remove('ag-diagram-exact-size')
-            // Render via a mermaid container so Mermaid transforms it into SVG
-            const containerHtml = `<div class="mermaid">${escapeHtmlTags(code)}</div>`
-            target.innerHTML = sanitizeRaw(containerHtml, DIAGRAM_DOMPURIFY_CONFIG)
-            // Initialize mermaid on this target only
-            mermaid.init(undefined, target.querySelectorAll('.mermaid'))
-          }
+          target.innerHTML = '<span class="ag-diagram-loading">Loading diagram...</span>'
+          const svg = await kroki.renderKrokiToSvg(krokiServerUrl, 'mermaid', code, {
+            timeoutMs: this.muya.options.krokiTimeoutMs || 5000
+          })
+          target.classList.add('ag-diagram-exact-size')
+          target.innerHTML = sanitizeRaw(svg, DIAGRAM_DOMPURIFY_CONFIG)
         } catch (err) {
-          // Do not fallback to local if Kroki is enabled; show error
-          target.innerHTML = '< Invalid Mermaid Codes or Kroki error >'
+          target.innerHTML = `<span class="ag-diagram-error">Mermaid Error: ${err.message}</span>`
           target.classList.add(CLASS_OR_ID.AG_MATH_ERROR)
+          target.classList.remove('ag-diagram-exact-size')
         }
       }
 
@@ -154,19 +142,24 @@ class StateRender {
   async renderDiagram () {
     const cache = this.diagramCache
     if (cache.size) {
-      // Try to use Kroki if enabled and supported.
-      let useKroki = false
-      let krokiServer = ''
+      // Always use Kroki - no local fallback
+      const krokiServerUrl = this.muya.options?.krokiServerUrl || 'http://localhost:8000'
       let kroki
+
       try {
-        useKroki = !!this.muya.options.enableKroki
-        krokiServer = this.muya.options.krokiServerUrl || ''
-        if (useKroki && krokiServer) {
-          kroki = await import('./kroki')
+        kroki = await import('./kroki')
+      } catch (error) {
+        console.error('Failed to load Kroki module:', error)
+        // Show error for all cached items
+        for (const [key] of cache.entries()) {
+          const target = document.querySelector(key)
+          if (target) {
+            target.innerHTML = '<span class="ag-diagram-error">Error: Cannot load Kroki module</span>'
+            target.classList.add(CLASS_OR_ID.AG_MATH_ERROR)
+          }
         }
-      } catch (_) {
-        // Ignore Kroki import errors and fallback to local renderers
-        useKroki = false
+        cache.clear()
+        return
       }
 
       for (const [key, value] of cache.entries()) {
@@ -174,52 +167,33 @@ class StateRender {
         if (!target) {
           continue
         }
+
         const { code, functionType } = value
-        const options = {}
-        if (functionType === 'sequence') {
-          Object.assign(options, { theme: this.muya.options.sequenceTheme })
-        } else if (functionType === 'vega-lite') {
-          Object.assign(options, {
-            actions: false,
-            tooltip: false,
-            renderer: 'svg',
-            theme: this.muya.options.vegaTheme
-          })
-        }
         try {
-          if (useKroki && kroki && kroki.isKrokiSupported(functionType)) {
-            target.innerHTML = 'Loading...'
-            const svg = await kroki.renderKrokiToSvg(krokiServer, functionType, code, { timeoutMs: this.muya.options.krokiTimeoutMs })
-            target.classList.add('ag-diagram-exact-size')
-            target.innerHTML = sanitizeRaw(svg, DIAGRAM_DOMPURIFY_CONFIG)
-          } else if (functionType === 'flowchart' || functionType === 'sequence') {
-            const render = await loadRenderer(functionType)
-            // Exact-size toggle is Kroki-only
-            target.classList.remove('ag-diagram-exact-size')
-            const diagram = render.parse(code)
-            target.innerHTML = ''
-            diagram.drawSVG(target, options)
-          } else if (functionType === 'plantuml') {
-            const render = await loadRenderer('plantuml')
-            // Exact-size toggle is Kroki-only
-            target.classList.remove('ag-diagram-exact-size')
-            const diagram = render.parse(code)
-            target.innerHTML = ''
-            diagram.insertImgElement(target)
-          } else if (functionType === 'vega-lite') {
-            const render = await loadRenderer('vega-lite')
-            // Exact-size toggle is Kroki-only
-            target.classList.remove('ag-diagram-exact-size')
-            await render(key, JSON.parse(code), options)
+          if (!kroki.isKrokiSupported(functionType)) {
+            target.innerHTML = `<span class="ag-diagram-error">Diagram type '${functionType}' not supported by Kroki</span>`
+            target.classList.add(CLASS_OR_ID.AG_MATH_ERROR)
+            continue
           }
+
+          target.innerHTML = '<span class="ag-diagram-loading">Loading diagram...</span>'
+          const svg = await kroki.renderKrokiToSvg(krokiServerUrl, functionType, code, {
+            timeoutMs: this.muya.options.krokiTimeoutMs || 5000
+          })
+          target.classList.add('ag-diagram-exact-size')
+          target.innerHTML = sanitizeRaw(svg, DIAGRAM_DOMPURIFY_CONFIG)
         } catch (err) {
-          // Do not fallback to local if Kroki is enabled; show error
-          const msg = functionType === 'flowchart' ? 'Flow Chart' : (functionType === 'sequence' ? 'Sequence' : functionType)
-          target.innerHTML = `<! Invalid ${msg} Codes or Kroki error >`
+          const friendlyType = functionType === 'vega-lite'
+            ? 'Vega-Lite'
+            : functionType === 'plantuml'
+              ? 'PlantUML'
+              : functionType.charAt(0).toUpperCase() + functionType.slice(1)
+          target.innerHTML = `<span class="ag-diagram-error">${friendlyType} Error: ${err.message}</span>`
           target.classList.add(CLASS_OR_ID.AG_MATH_ERROR)
+          target.classList.remove('ag-diagram-exact-size')
         }
       }
-      this.diagramCache.clear()
+      cache.clear()
     }
   }
 

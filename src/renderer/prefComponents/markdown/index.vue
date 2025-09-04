@@ -92,12 +92,7 @@
           :onChange="value => onSelectChange('sequenceTheme', value)"
           more="https://bramp.github.io/js-sequence-diagrams/"
         ></cur-select>
-        <bool
-          description="Render diagrams via Kroki"
-          notes="If enabled, MarkText sends diagram code to the configured Kroki server and embeds the returned SVG."
-          :bool="enableKroki"
-          :onChange="value => onSelectChange('enableKroki', value)"
-        ></bool>
+
         <text-box
           description="Kroki server URL"
           :input="krokiServerUrl"
@@ -179,7 +174,6 @@ export default {
       isHtmlEnabled: state => state.preferences.isHtmlEnabled,
       isGitlabCompatibilityEnabled: state => state.preferences.isGitlabCompatibilityEnabled,
       sequenceTheme: state => state.preferences.sequenceTheme,
-      enableKroki: state => state.preferences.enableKroki,
       krokiServerUrl: state => state.preferences.krokiServerUrl,
       krokiTimeoutMs: state => state.preferences.krokiTimeoutMs
     })
@@ -193,6 +187,4 @@ export default {
 </script>
 
 <style scoped>
-  .pref-markdown {
-  }
 </style>
