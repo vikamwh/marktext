@@ -4,9 +4,57 @@
 // - Accept: image/svg+xml
 
 const TYPE_MAP = {
+  // Existing supported types
   mermaid: 'mermaid',
   plantuml: 'plantuml',
-  'vega-lite': 'vegalite'
+  'vega-lite': 'vegalite',
+
+  // Previously local-only diagrams now via Kroki
+  flowchart: 'graphviz', // Flowchart.js -> GraphViz
+  sequence: 'seqdiag', // js-sequence-diagrams -> SeqDiag
+
+  // BlockDiag family
+  blockdiag: 'blockdiag',
+  seqdiag: 'seqdiag',
+  actdiag: 'actdiag',
+  nwdiag: 'nwdiag',
+  packetdiag: 'packetdiag',
+  rackdiag: 'rackdiag',
+
+  // Architecture and modeling
+  bpmn: 'bpmn',
+  c4plantuml: 'c4plantuml',
+  structurizr: 'structurizr',
+
+  // Graphs and networks
+  graphviz: 'graphviz',
+  nomnoml: 'nomnoml',
+
+  // Data and documentation
+  dbml: 'dbml',
+  erd: 'erd',
+  bytefield: 'bytefield',
+
+  // Technical diagrams
+  ditaa: 'ditaa',
+  pikchr: 'pikchr',
+  svgbob: 'svgbob',
+  wavedrom: 'wavedrom',
+  wireviz: 'wireviz',
+  symbolator: 'symbolator',
+
+  // Charts and visualization
+  vega: 'vega',
+
+  // Sketch and presentation
+  excalidraw: 'excalidraw',
+
+  // Specialized tools
+  umlet: 'umlet',
+  tikz: 'tikz',
+
+  // Experimental
+  d2: 'd2'
 }
 
 export const isKrokiSupported = (functionType) => {
@@ -46,15 +94,17 @@ export async function renderKrokiToSvg (serverUrl, functionType, code, opts = {}
   }
 
   if (!res.ok) {
-    const text = await res.text().catch(() => '')
+    let text = await res.text().catch(() => '')
     let errorMsg = `Kroki render failed (${res.status})`
 
+    if (text.length > 1024) { text = text.slice(0, 1024) }
+
     if (res.status === 400) {
-      errorMsg = `Invalid ${functionType} syntax. Please check your diagram code.`
+      errorMsg = `Invalid ${functionType} syntax. Please check your diagram code.\n${text}`
     } else if (res.status === 404) {
-      errorMsg = `Diagram type "${functionType}" is not supported by this Kroki server.`
+      errorMsg = `Diagram type "${functionType}" is not supported by this Kroki server.\n${text}`
     } else if (res.status >= 500) {
-      errorMsg = `Kroki server error (${res.status}). Server may be overloaded or misconfigured.`
+      errorMsg = `Kroki server error (${res.status}). Server may be overloaded or misconfigured.\n${text}`
     } else if (text) {
       errorMsg += `: ${text}`
     }

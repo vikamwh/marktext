@@ -694,13 +694,139 @@ pre.ag-active[data-role="vega-lite"]::before {
   content: '``` vega-lite';
 }
 
+/* All new Kroki diagram types */
+pre.ag-active[data-role="graphviz"]::before {
+  content: '``` graphviz';
+}
+
+pre.ag-active[data-role="blockdiag"]::before {
+  content: '``` blockdiag';
+}
+
+pre.ag-active[data-role="seqdiag"]::before {
+  content: '``` seqdiag';
+}
+
+pre.ag-active[data-role="actdiag"]::before {
+  content: '``` actdiag';
+}
+
+pre.ag-active[data-role="nwdiag"]::before {
+  content: '``` nwdiag';
+}
+
+pre.ag-active[data-role="packetdiag"]::before {
+  content: '``` packetdiag';
+}
+
+pre.ag-active[data-role="rackdiag"]::before {
+  content: '``` rackdiag';
+}
+
+pre.ag-active[data-role="bpmn"]::before {
+  content: '``` bpmn';
+}
+
+pre.ag-active[data-role="c4plantuml"]::before {
+  content: '``` c4plantuml';
+}
+
+pre.ag-active[data-role="structurizr"]::before {
+  content: '``` structurizr';
+}
+
+pre.ag-active[data-role="nomnoml"]::before {
+  content: '``` nomnoml';
+}
+
+pre.ag-active[data-role="dbml"]::before {
+  content: '``` dbml';
+}
+
+pre.ag-active[data-role="erd"]::before {
+  content: '``` erd';
+}
+
+pre.ag-active[data-role="bytefield"]::before {
+  content: '``` bytefield';
+}
+
+pre.ag-active[data-role="ditaa"]::before {
+  content: '``` ditaa';
+}
+
+pre.ag-active[data-role="pikchr"]::before {
+  content: '``` pikchr';
+}
+
+pre.ag-active[data-role="svgbob"]::before {
+  content: '``` svgbob';
+}
+
+pre.ag-active[data-role="wavedrom"]::before {
+  content: '``` wavedrom';
+}
+
+pre.ag-active[data-role="wireviz"]::before {
+  content: '``` wireviz';
+}
+
+pre.ag-active[data-role="symbolator"]::before {
+  content: '``` symbolator';
+}
+
+pre.ag-active[data-role="vega"]::before {
+  content: '``` vega';
+}
+
+pre.ag-active[data-role="excalidraw"]::before {
+  content: '``` excalidraw';
+}
+
+pre.ag-active[data-role="umlet"]::before {
+  content: '``` umlet';
+}
+
+pre.ag-active[data-role="tikz"]::before {
+  content: '``` tikz';
+}
+
+pre.ag-active[data-role="d2"]::before {
+  content: '``` d2';
+}
+
 pre.ag-active.ag-fence-code::before,
 pre.ag-active.ag-fence-code::after,
 pre.ag-active[data-role="mermaid"]::after,
 pre.ag-active[data-role="flowchart"]::after,
 pre.ag-active[data-role="sequence"]::after,
 pre.ag-active[data-role="plantuml"]::after,
-pre.ag-active[data-role="vega-lite"]::after {
+pre.ag-active[data-role="vega-lite"]::after,
+pre.ag-active[data-role="graphviz"]::after,
+pre.ag-active[data-role="blockdiag"]::after,
+pre.ag-active[data-role="seqdiag"]::after,
+pre.ag-active[data-role="actdiag"]::after,
+pre.ag-active[data-role="nwdiag"]::after,
+pre.ag-active[data-role="packetdiag"]::after,
+pre.ag-active[data-role="rackdiag"]::after,
+pre.ag-active[data-role="bpmn"]::after,
+pre.ag-active[data-role="c4plantuml"]::after,
+pre.ag-active[data-role="structurizr"]::after,
+pre.ag-active[data-role="nomnoml"]::after,
+pre.ag-active[data-role="dbml"]::after,
+pre.ag-active[data-role="erd"]::after,
+pre.ag-active[data-role="bytefield"]::after,
+pre.ag-active[data-role="ditaa"]::after,
+pre.ag-active[data-role="pikchr"]::after,
+pre.ag-active[data-role="svgbob"]::after,
+pre.ag-active[data-role="wavedrom"]::after,
+pre.ag-active[data-role="wireviz"]::after,
+pre.ag-active[data-role="symbolator"]::after,
+pre.ag-active[data-role="vega"]::after,
+pre.ag-active[data-role="excalidraw"]::after,
+pre.ag-active[data-role="umlet"]::after,
+pre.ag-active[data-role="tikz"]::after,
+pre.ag-active[data-role="d2"]::after {
   content: '```';
 }
 
@@ -716,6 +842,56 @@ pre.ag-active[data-role="plantuml"]::before,
 pre.ag-active[data-role="plantuml"]::after,
 pre.ag-active[data-role="vega-lite"]::before,
 pre.ag-active[data-role="vega-lite"]::after,
+pre.ag-active[data-role="graphviz"]::before,
+pre.ag-active[data-role="graphviz"]::after,
+pre.ag-active[data-role="blockdiag"]::before,
+pre.ag-active[data-role="blockdiag"]::after,
+pre.ag-active[data-role="seqdiag"]::before,
+pre.ag-active[data-role="seqdiag"]::after,
+pre.ag-active[data-role="actdiag"]::before,
+pre.ag-active[data-role="actdiag"]::after,
+pre.ag-active[data-role="nwdiag"]::before,
+pre.ag-active[data-role="nwdiag"]::after,
+pre.ag-active[data-role="packetdiag"]::before,
+pre.ag-active[data-role="packetdiag"]::after,
+pre.ag-active[data-role="rackdiag"]::before,
+pre.ag-active[data-role="rackdiag"]::after,
+pre.ag-active[data-role="bpmn"]::before,
+pre.ag-active[data-role="bpmn"]::after,
+pre.ag-active[data-role="c4plantuml"]::before,
+pre.ag-active[data-role="c4plantuml"]::after,
+pre.ag-active[data-role="structurizr"]::before,
+pre.ag-active[data-role="structurizr"]::after,
+pre.ag-active[data-role="nomnoml"]::before,
+pre.ag-active[data-role="nomnoml"]::after,
+pre.ag-active[data-role="dbml"]::before,
+pre.ag-active[data-role="dbml"]::after,
+pre.ag-active[data-role="erd"]::before,
+pre.ag-active[data-role="erd"]::after,
+pre.ag-active[data-role="bytefield"]::before,
+pre.ag-active[data-role="bytefield"]::after,
+pre.ag-active[data-role="ditaa"]::before,
+pre.ag-active[data-role="ditaa"]::after,
+pre.ag-active[data-role="pikchr"]::before,
+pre.ag-active[data-role="pikchr"]::after,
+pre.ag-active[data-role="svgbob"]::before,
+pre.ag-active[data-role="svgbob"]::after,
+pre.ag-active[data-role="wavedrom"]::before,
+pre.ag-active[data-role="wavedrom"]::after,
+pre.ag-active[data-role="wireviz"]::before,
+pre.ag-active[data-role="wireviz"]::after,
+pre.ag-active[data-role="symbolator"]::before,
+pre.ag-active[data-role="symbolator"]::after,
+pre.ag-active[data-role="vega"]::before,
+pre.ag-active[data-role="vega"]::after,
+pre.ag-active[data-role="excalidraw"]::before,
+pre.ag-active[data-role="excalidraw"]::after,
+pre.ag-active[data-role="umlet"]::before,
+pre.ag-active[data-role="umlet"]::after,
+pre.ag-active[data-role="tikz"]::before,
+pre.ag-active[data-role="tikz"]::after,
+pre.ag-active[data-role="d2"]::before,
+pre.ag-active[data-role="d2"]::after,
 pre.ag-active.ag-fence-code::before,
 pre.ag-active.ag-fence-code::after,
 pre.ag-active.ag-multiple-math::before,
@@ -732,6 +908,31 @@ pre.ag-active[data-role="flowchart"]::before,
 pre.ag-active[data-role="sequence"]::before,
 pre.ag-active[data-role="plantuml"]::before,
 pre.ag-active[data-role="vega-lite"]::before,
+pre.ag-active[data-role="graphviz"]::before,
+pre.ag-active[data-role="blockdiag"]::before,
+pre.ag-active[data-role="seqdiag"]::before,
+pre.ag-active[data-role="actdiag"]::before,
+pre.ag-active[data-role="nwdiag"]::before,
+pre.ag-active[data-role="packetdiag"]::before,
+pre.ag-active[data-role="rackdiag"]::before,
+pre.ag-active[data-role="bpmn"]::before,
+pre.ag-active[data-role="c4plantuml"]::before,
+pre.ag-active[data-role="structurizr"]::before,
+pre.ag-active[data-role="nomnoml"]::before,
+pre.ag-active[data-role="dbml"]::before,
+pre.ag-active[data-role="erd"]::before,
+pre.ag-active[data-role="bytefield"]::before,
+pre.ag-active[data-role="ditaa"]::before,
+pre.ag-active[data-role="pikchr"]::before,
+pre.ag-active[data-role="svgbob"]::before,
+pre.ag-active[data-role="wavedrom"]::before,
+pre.ag-active[data-role="wireviz"]::before,
+pre.ag-active[data-role="symbolator"]::before,
+pre.ag-active[data-role="vega"]::before,
+pre.ag-active[data-role="excalidraw"]::before,
+pre.ag-active[data-role="umlet"]::before,
+pre.ag-active[data-role="tikz"]::before,
+pre.ag-active[data-role="d2"]::before,
 pre.ag-active.ag-multiple-math::before,
 pre.ag-active.ag-fence-code::before {
   top: -20px;
@@ -743,6 +944,31 @@ pre.ag-active[data-role="flowchart"]::after,
 pre.ag-active[data-role="sequence"]::after,
 pre.ag-active[data-role="plantuml"]::after,
 pre.ag-active[data-role="vega-lite"]::after,
+pre.ag-active[data-role="graphviz"]::after,
+pre.ag-active[data-role="blockdiag"]::after,
+pre.ag-active[data-role="seqdiag"]::after,
+pre.ag-active[data-role="actdiag"]::after,
+pre.ag-active[data-role="nwdiag"]::after,
+pre.ag-active[data-role="packetdiag"]::after,
+pre.ag-active[data-role="rackdiag"]::after,
+pre.ag-active[data-role="bpmn"]::after,
+pre.ag-active[data-role="c4plantuml"]::after,
+pre.ag-active[data-role="structurizr"]::after,
+pre.ag-active[data-role="nomnoml"]::after,
+pre.ag-active[data-role="dbml"]::after,
+pre.ag-active[data-role="erd"]::after,
+pre.ag-active[data-role="bytefield"]::after,
+pre.ag-active[data-role="ditaa"]::after,
+pre.ag-active[data-role="pikchr"]::after,
+pre.ag-active[data-role="svgbob"]::after,
+pre.ag-active[data-role="wavedrom"]::after,
+pre.ag-active[data-role="wireviz"]::after,
+pre.ag-active[data-role="symbolator"]::after,
+pre.ag-active[data-role="vega"]::after,
+pre.ag-active[data-role="excalidraw"]::after,
+pre.ag-active[data-role="umlet"]::after,
+pre.ag-active[data-role="tikz"]::after,
+pre.ag-active[data-role="d2"]::after,
 pre.ag-active.ag-multiple-math::after,
 pre.ag-active.ag-fence-code::after {
   bottom: -23px;

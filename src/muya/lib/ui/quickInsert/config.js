@@ -142,28 +142,98 @@ export const quickInsertObj = {
   }],
   diagram: [{
     title: 'Vega Chart',
-    subTitle: 'Render flow chart by vega-lite.js.',
+    subTitle: 'Render chart by Vega-Lite via Kroki.',
     label: 'vega-lite',
     icon: vegaIcon
   }, {
     title: 'Flow Chart',
-    subTitle: 'Render flow chart by flowchart.js.',
+    subTitle: 'Render flow chart by GraphViz via Kroki.',
     label: 'flowchart',
     icon: flowchartIcon
   }, {
     title: 'Sequence Diagram',
-    subTitle: 'Render sequence diagram by js-sequence.',
+    subTitle: 'Render sequence diagram by SeqDiag via Kroki.',
     label: 'sequence',
     icon: sequenceIcon
   }, {
     title: 'PlantUML Diagram',
-    subTitle: 'Render PlantUML diagrams',
+    subTitle: 'Render PlantUML diagrams via Kroki.',
     label: 'plantuml',
     icon: plantumlIcon
   }, {
     title: 'Mermaid',
-    subTitle: 'Render Diagram by mermaid.',
+    subTitle: 'Render diagram by Mermaid via Kroki.',
     label: 'mermaid',
     icon: mermaidIcon
+  }, {
+    title: 'GraphViz',
+    subTitle: 'Render graph by GraphViz via Kroki.',
+    label: 'graphviz',
+    icon: flowchartIcon
+  }, {
+    title: 'BlockDiag',
+    subTitle: 'Render block diagram by BlockDiag via Kroki.',
+    label: 'blockdiag',
+    icon: codeIcon
+  }, {
+    title: 'SeqDiag',
+    subTitle: 'Render sequence diagram by SeqDiag via Kroki.',
+    label: 'seqdiag',
+    icon: sequenceIcon
+  }, {
+    title: 'ActDiag',
+    subTitle: 'Render activity diagram by ActDiag via Kroki.',
+    label: 'actdiag',
+    icon: codeIcon
+  }, {
+    title: 'NwDiag',
+    subTitle: 'Render network diagram by NwDiag via Kroki.',
+    label: 'nwdiag',
+    icon: codeIcon
+  }, {
+    title: 'BPMN',
+    subTitle: 'Render business process diagram via Kroki.',
+    label: 'bpmn',
+    icon: codeIcon
+  }, {
+    title: 'C4 PlantUML',
+    subTitle: 'Render C4 architecture diagram via Kroki.',
+    label: 'c4plantuml',
+    icon: plantumlIcon
+  }, {
+    title: 'Ditaa',
+    subTitle: 'Render ASCII art diagram by Ditaa via Kroki.',
+    label: 'ditaa',
+    icon: codeIcon
+  }, {
+    title: 'Entity Relationship',
+    subTitle: 'Render ER diagram via Kroki.',
+    label: 'erd',
+    icon: codeIcon
+  }, {
+    title: 'Excalidraw',
+    subTitle: 'Render hand-drawn style diagram via Kroki.',
+    label: 'excalidraw',
+    icon: codeIcon
+  }, {
+    title: 'Nomnoml',
+    subTitle: 'Render UML diagram by Nomnoml via Kroki.',
+    label: 'nomnoml',
+    icon: codeIcon
+  }, {
+    title: 'Vega',
+    subTitle: 'Render visualization by Vega via Kroki.',
+    label: 'vega',
+    icon: vegaIcon
+  }, {
+    title: 'WaveDrom',
+    subTitle: 'Render digital timing diagram via Kroki.',
+    label: 'wavedrom',
+    icon: codeIcon
+  }, {
+    title: 'D2',
+    subTitle: 'Render declarative diagram by D2 via Kroki.',
+    label: 'd2',
+    icon: codeIcon
   }]
 }

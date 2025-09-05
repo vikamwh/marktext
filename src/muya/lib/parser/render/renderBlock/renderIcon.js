@@ -25,6 +25,7 @@ import vegaIcon from '../../../assets/pngicon/chart/2.png'
 import footnoteIcon from '../../../assets/pngicon/footnote/2.png'
 
 const FUNCTION_TYPE_HASH = {
+  // Original icons
   mermaid: mermaidIcon,
   flowchart: flowchartIcon,
   sequence: sequenceIcon,
@@ -36,7 +37,34 @@ const FUNCTION_TYPE_HASH = {
   fencecode: codeIcon,
   indentcode: codeIcon,
   frontmatter: frontMatterIcon,
-  footnote: footnoteIcon
+  footnote: footnoteIcon,
+
+  // New Kroki diagram types - reuse existing icons where appropriate
+  graphviz: flowchartIcon,
+  blockdiag: codeIcon,
+  seqdiag: sequenceIcon,
+  actdiag: codeIcon,
+  nwdiag: codeIcon,
+  packetdiag: codeIcon,
+  rackdiag: codeIcon,
+  bpmn: flowchartIcon,
+  c4plantuml: plantumlIcon,
+  structurizr: plantumlIcon,
+  nomnoml: plantumlIcon,
+  dbml: codeIcon,
+  erd: codeIcon,
+  bytefield: codeIcon,
+  ditaa: codeIcon,
+  pikchr: codeIcon,
+  svgbob: codeIcon,
+  wavedrom: codeIcon,
+  wireviz: codeIcon,
+  symbolator: codeIcon,
+  vega: vegaIcon,
+  excalidraw: codeIcon,
+  umlet: plantumlIcon,
+  tikz: codeIcon,
+  d2: codeIcon
 }
 
 export default function renderIcon (block) {

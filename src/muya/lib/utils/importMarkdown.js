@@ -180,7 +180,9 @@ const importRegister = ContentState => {
             value = value.replace(/\n+$/, '')
               .replace(/^\n+/, '')
           }
-          if (/mermaid|flowchart|vega-lite|sequence|plantuml/.test(lang)) {
+          // All Kroki-supported diagram types
+          const diagramTypes = 'mermaid|flowchart|vega-lite|sequence|plantuml|graphviz|blockdiag|seqdiag|actdiag|nwdiag|packetdiag|rackdiag|bpmn|c4plantuml|structurizr|nomnoml|dbml|erd|bytefield|ditaa|pikchr|svgbob|wavedrom|wireviz|symbolator|vega|excalidraw|umlet|tikz|d2'
+          if (new RegExp(diagramTypes).test(lang)) {
             block = this.createContainerBlock(lang, value)
             this.appendChild(parentList[0], block)
           } else {

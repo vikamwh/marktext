@@ -193,7 +193,34 @@ export default function renderLeafBlock (parent, block, activeBlocks, matches, u
       case 'flowchart':
       case 'sequence':
       case 'plantuml':
-      case 'vega-lite': {
+      case 'vega-lite':
+        // All new Kroki diagram types
+        // eslint-disable-next-line no-fallthrough
+      case 'graphviz':
+      case 'blockdiag':
+      case 'seqdiag':
+      case 'actdiag':
+      case 'nwdiag':
+      case 'packetdiag':
+      case 'rackdiag':
+      case 'bpmn':
+      case 'c4plantuml':
+      case 'structurizr':
+      case 'nomnoml':
+      case 'dbml':
+      case 'erd':
+      case 'bytefield':
+      case 'ditaa':
+      case 'pikchr':
+      case 'svgbob':
+      case 'wavedrom':
+      case 'wireviz':
+      case 'symbolator':
+      case 'vega':
+      case 'excalidraw':
+      case 'umlet':
+      case 'tikz':
+      case 'd2': {
         selector += `.${CLASS_OR_ID.AG_CONTAINER_PREVIEW}`
         Object.assign(data.attrs, { spellcheck: 'false' })
         if (code === '') {

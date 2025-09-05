@@ -18,11 +18,39 @@ export const getSanitizeHtml = (markdown, options) => {
 }
 
 const DIAGRAM_TYPE = [
+  // Original types
   'mermaid',
   'flowchart',
   'sequence',
   'plantuml',
-  'vega-lite'
+  'vega-lite',
+
+  // All new Kroki diagram types
+  'graphviz',
+  'blockdiag',
+  'seqdiag',
+  'actdiag',
+  'nwdiag',
+  'packetdiag',
+  'rackdiag',
+  'bpmn',
+  'c4plantuml',
+  'structurizr',
+  'nomnoml',
+  'dbml',
+  'erd',
+  'bytefield',
+  'ditaa',
+  'pikchr',
+  'svgbob',
+  'wavedrom',
+  'wireviz',
+  'symbolator',
+  'vega',
+  'excalidraw',
+  'umlet',
+  'tikz',
+  'd2'
 ]
 
 class ExportHtml {
@@ -77,7 +105,9 @@ class ExportHtml {
   }
 
   async renderDiagram () {
-    const selector = 'code.language-vega-lite, code.language-flowchart, code.language-sequence, code.language-plantuml'
+    // Create selector for all supported diagram types
+    const diagramSelectors = DIAGRAM_TYPE.filter(type => type !== 'mermaid').map(type => `code.language-${type}`).join(', ')
+    const selector = diagramSelectors
     // Kroki Always-On: Only use Kroki server for rendering
     let kroki
     try {
@@ -87,26 +117,33 @@ class ExportHtml {
       const codes = this.exportContainer.querySelectorAll(selector)
       for (const code of codes) {
         const functionType = (() => {
-          if (/sequence/.test(code.className)) {
-            return 'sequence'
-          } else if (/plantuml/.test(code.className)) {
-            return 'plantuml'
-          } else if (/flowchart/.test(code.className)) {
-            return 'flowchart'
-          } else {
-            return 'vega-lite'
+          // Extract diagram type from className
+          for (const type of DIAGRAM_TYPE) {
+            if (code.className.includes(`language-${type}`)) {
+              return type
+            }
           }
+          return 'unknown'
         })()
 
-        const diagramName = functionType === 'flowchart'
-          ? 'Flowchart'
-          : functionType === 'sequence'
-            ? 'Sequence Diagram'
-            : functionType === 'plantuml'
-              ? 'PlantUML'
-              : functionType === 'vega-lite'
-                ? 'Vega-Lite'
-                : functionType.charAt(0).toUpperCase() + functionType.slice(1)
+        // Create display name for diagram type
+        const diagramName = (() => {
+          switch (functionType) {
+            case 'flowchart': return 'Flowchart'
+            case 'sequence': return 'Sequence Diagram'
+            case 'plantuml': return 'PlantUML'
+            case 'c4plantuml': return 'C4 PlantUML'
+            case 'seqdiag': return 'SeqDiag'
+            case 'actdiag': return 'ActDiag'
+            case 'nwdiag': return 'NwDiag'
+            case 'packetdiag': return 'PacketDiag'
+            case 'rackdiag': return 'RackDiag'
+            case 'blockdiag': return 'BlockDiag'
+            case 'graphviz': return 'GraphViz'
+            case 'wavedrom': return 'WaveDrom'
+            default: return functionType.charAt(0).toUpperCase() + functionType.slice(1)
+          }
+        })()
 
         const preParent = code.parentNode
         const diagramContainer = document.createElement('div')
@@ -124,15 +161,13 @@ class ExportHtml {
     for (const code of codes) {
       const rawCode = unescapeHTML(code.innerHTML)
       const functionType = (() => {
-        if (/sequence/.test(code.className)) {
-          return 'sequence'
-        } else if (/plantuml/.test(code.className)) {
-          return 'plantuml'
-        } else if (/flowchart/.test(code.className)) {
-          return 'flowchart'
-        } else {
-          return 'vega-lite'
+        // Extract diagram type from className
+        for (const type of DIAGRAM_TYPE) {
+          if (code.className.includes(`language-${type}`)) {
+            return type
+          }
         }
+        return 'unknown'
       })()
 
       const preParent = code.parentNode
@@ -151,15 +186,24 @@ class ExportHtml {
           throw new Error(`Diagram type "${functionType}" is not supported by Kroki`)
         }
       } catch (err) {
-        const diagramName = functionType === 'flowchart'
-          ? 'Flowchart'
-          : functionType === 'sequence'
-            ? 'Sequence Diagram'
-            : functionType === 'plantuml'
-              ? 'PlantUML'
-              : functionType === 'vega-lite'
-                ? 'Vega-Lite'
-                : functionType.charAt(0).toUpperCase() + functionType.slice(1)
+        // Create display name for diagram type
+        const diagramName = (() => {
+          switch (functionType) {
+            case 'flowchart': return 'Flowchart'
+            case 'sequence': return 'Sequence Diagram'
+            case 'plantuml': return 'PlantUML'
+            case 'c4plantuml': return 'C4 PlantUML'
+            case 'seqdiag': return 'SeqDiag'
+            case 'actdiag': return 'ActDiag'
+            case 'nwdiag': return 'NwDiag'
+            case 'packetdiag': return 'PacketDiag'
+            case 'rackdiag': return 'RackDiag'
+            case 'blockdiag': return 'BlockDiag'
+            case 'graphviz': return 'GraphViz'
+            case 'wavedrom': return 'WaveDrom'
+            default: return functionType.charAt(0).toUpperCase() + functionType.slice(1)
+          }
+        })()
 
         this.diagramErrors.push(`${diagramName}: ${err.message || 'Unknown rendering error'}`)
         diagramContainer.innerHTML = `<div class="ag-diagram-error">

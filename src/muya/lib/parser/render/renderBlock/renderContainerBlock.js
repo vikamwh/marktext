@@ -13,11 +13,40 @@ const PRE_BLOCK_HASH = {
   html: `.${CLASS_OR_ID.AG_HTML_BLOCK}`,
   frontmatter: `.${CLASS_OR_ID.AG_FRONT_MATTER}`,
   multiplemath: `.${CLASS_OR_ID.AG_MULTIPLE_MATH}`,
+
+  // Original diagram types
   flowchart: `.${CLASS_OR_ID.AG_FLOWCHART}`,
   sequence: `.${CLASS_OR_ID.AG_SEQUENCE}`,
   plantuml: `.${CLASS_OR_ID.AG_PLANTUML}`,
   mermaid: `.${CLASS_OR_ID.AG_MERMAID}`,
-  'vega-lite': `.${CLASS_OR_ID.AG_VEGA_LITE}`
+  'vega-lite': `.${CLASS_OR_ID.AG_VEGA_LITE}`,
+
+  // New Kroki diagram types - use generic diagram class for now
+  graphviz: `.${CLASS_OR_ID.AG_FLOWCHART}`,
+  blockdiag: `.${CLASS_OR_ID.AG_FLOWCHART}`,
+  seqdiag: `.${CLASS_OR_ID.AG_SEQUENCE}`,
+  actdiag: `.${CLASS_OR_ID.AG_FLOWCHART}`,
+  nwdiag: `.${CLASS_OR_ID.AG_FLOWCHART}`,
+  packetdiag: `.${CLASS_OR_ID.AG_FLOWCHART}`,
+  rackdiag: `.${CLASS_OR_ID.AG_FLOWCHART}`,
+  bpmn: `.${CLASS_OR_ID.AG_FLOWCHART}`,
+  c4plantuml: `.${CLASS_OR_ID.AG_PLANTUML}`,
+  structurizr: `.${CLASS_OR_ID.AG_PLANTUML}`,
+  nomnoml: `.${CLASS_OR_ID.AG_PLANTUML}`,
+  dbml: `.${CLASS_OR_ID.AG_FLOWCHART}`,
+  erd: `.${CLASS_OR_ID.AG_FLOWCHART}`,
+  bytefield: `.${CLASS_OR_ID.AG_FLOWCHART}`,
+  ditaa: `.${CLASS_OR_ID.AG_FLOWCHART}`,
+  pikchr: `.${CLASS_OR_ID.AG_FLOWCHART}`,
+  svgbob: `.${CLASS_OR_ID.AG_FLOWCHART}`,
+  wavedrom: `.${CLASS_OR_ID.AG_FLOWCHART}`,
+  wireviz: `.${CLASS_OR_ID.AG_FLOWCHART}`,
+  symbolator: `.${CLASS_OR_ID.AG_FLOWCHART}`,
+  vega: `.${CLASS_OR_ID.AG_VEGA_LITE}`,
+  excalidraw: `.${CLASS_OR_ID.AG_FLOWCHART}`,
+  umlet: `.${CLASS_OR_ID.AG_PLANTUML}`,
+  tikz: `.${CLASS_OR_ID.AG_FLOWCHART}`,
+  d2: `.${CLASS_OR_ID.AG_FLOWCHART}`
 }
 
 export default function renderContainerBlock (parent, block, activeBlocks, matches, useCache = false) {
@@ -153,9 +182,9 @@ export default function renderContainerBlock (parent, block, activeBlocks, match
       }
     }
 
-    if (
-      /html|multiplemath|flowchart|mermaid|sequence|plantuml|vega-lite/.test(functionType)
-    ) {
+    const allDiagramTypes = 'html|multiplemath|flowchart|mermaid|sequence|plantuml|vega-lite|graphviz|blockdiag|seqdiag|actdiag|nwdiag|packetdiag|rackdiag|bpmn|c4plantuml|structurizr|nomnoml|dbml|erd|bytefield|ditaa|pikchr|svgbob|wavedrom|wireviz|symbolator|vega|excalidraw|umlet|tikz|d2'
+
+    if (new RegExp(allDiagramTypes).test(functionType)) {
       selector += `.${CLASS_OR_ID.AG_CONTAINER_BLOCK}`
       Object.assign(data.attrs, { spellcheck: 'false' })
     }
@@ -174,7 +203,9 @@ export default function renderContainerBlock (parent, block, activeBlocks, match
     Object.assign(data.dataset, { role: functionType })
     selector += PRE_BLOCK_HASH[block.functionType]
 
-    if (/html|multiplemath|mermaid|flowchart|vega-lite|sequence|plantuml/.test(functionType)) {
+    const allDiagramTypes = 'html|multiplemath|mermaid|flowchart|vega-lite|sequence|plantuml|graphviz|blockdiag|seqdiag|actdiag|nwdiag|packetdiag|rackdiag|bpmn|c4plantuml|structurizr|nomnoml|dbml|erd|bytefield|ditaa|pikchr|svgbob|wavedrom|wireviz|symbolator|vega|excalidraw|umlet|tikz|d2'
+
+    if (new RegExp(allDiagramTypes).test(functionType)) {
       const codeBlock = block.children[0]
       const code = codeBlock.children.map(line => line.text).join('\n')
       this.codeCache.set(block.key, code)
