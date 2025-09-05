@@ -4,11 +4,6 @@
     "type": "boolean",
     "default": false
   },
-  "enableKroki": {
-    "description": "Markdown--Enable rendering diagrams via Kroki server.",
-    "type": "boolean",
-    "default": false
-  },
   "krokiServerUrl": {
     "description": "Markdown--Kroki server base URL (e.g., http://localhost:8000).",
     "type": "string",

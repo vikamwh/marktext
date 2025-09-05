@@ -27,16 +27,39 @@ export async function renderKrokiToSvg (serverUrl, functionType, code, opts = {}
   if (signal && typeof signal.addEventListener === 'function') {
     signal.addEventListener('abort', () => controller.abort(signal.reason), { once: true })
   }
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: code,
-    signal: controller.signal
-  })
-    .finally(() => { if (_timer) clearTimeout(_timer) })
+
+  let res
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: code,
+      signal: controller.signal
+    })
+  } catch (err) {
+    if (err.name === 'AbortError' || err.message === 'kroki-timeout') {
+      throw new Error(`Kroki server timeout (${timeoutMs}ms). Check server availability at: ${serverUrl}`)
+    }
+    throw new Error(`Cannot reach Kroki server at: ${serverUrl}. Please check server URL and network connection.`)
+  } finally {
+    if (_timer) clearTimeout(_timer)
+  }
+
   if (!res.ok) {
     const text = await res.text().catch(() => '')
-    throw new Error(`Kroki render failed (${res.status}): ${text}`)
+    let errorMsg = `Kroki render failed (${res.status})`
+
+    if (res.status === 400) {
+      errorMsg = `Invalid ${functionType} syntax. Please check your diagram code.`
+    } else if (res.status === 404) {
+      errorMsg = `Diagram type "${functionType}" is not supported by this Kroki server.`
+    } else if (res.status >= 500) {
+      errorMsg = `Kroki server error (${res.status}). Server may be overloaded or misconfigured.`
+    } else if (text) {
+      errorMsg += `: ${text}`
+    }
+
+    throw new Error(errorMsg)
   }
   return res.text()
 }

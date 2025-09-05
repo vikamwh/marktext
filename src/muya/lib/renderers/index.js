@@ -1,38 +1,11 @@
-const rendererCache = new Map()
 /**
+ * All local diagram renderers have been removed in favor of Kroki server-side rendering.
+ * This stub function throws an error to prevent accidental usage of local renderers.
  *
  * @param {string} name the renderer name: katex, sequence, plantuml, flowchart, mermaid, vega-lite
  */
 const loadRenderer = async (name) => {
-  if (!rendererCache.has(name)) {
-    let m
-    switch (name) {
-      case 'sequence':
-        m = await import('../parser/render/sequence')
-        rendererCache.set(name, m.default)
-        break
-      case 'plantuml':
-        m = await import('../parser/render/plantuml')
-        rendererCache.set(name, m.default)
-        break
-      case 'flowchart':
-        m = await import('flowchart.js')
-        rendererCache.set(name, m.default)
-        break
-      case 'mermaid':
-        m = await import('mermaid/dist/mermaid.core.mjs')
-        rendererCache.set(name, m.default)
-        break
-      case 'vega-lite':
-        m = await import('vega-embed')
-        rendererCache.set(name, m.default)
-        break
-      default:
-        throw new Error(`Unknown diagram name ${name}`)
-    }
-  }
-
-  return rendererCache.get(name)
+  throw new Error(`Local renderer '${name}' is no longer available. All diagrams are now rendered via Kroki server.`)
 }
 
 export default loadRenderer

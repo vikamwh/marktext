@@ -972,13 +972,15 @@ export default {
       switch (type) {
         case 'styledHtml': {
           try {
-            const content = await this.editor.exportStyledHTML({
+            const result = await this.editor.exportStyledHTML({
               title: htmlTitle || '',
               printOptimization: false,
               extraCss,
               toc: htmlToc
             })
-            this.$store.dispatch('EXPORT', { type, content })
+            const content = result.html || result
+            const diagramErrors = result.diagramErrors || []
+            this.$store.dispatch('EXPORT', { type, content, diagramErrors })
           } catch (err) {
             log.error('Failed to export document:', err)
             notice.notify({
@@ -997,7 +999,7 @@ export default {
               pageSize, pageSizeWidth, pageSizeHeight, isLandscape
             }
 
-            const html = await this.editor.exportStyledHTML({
+            const result = await this.editor.exportStyledHTML({
               title: '',
               printOptimization: true,
               extraCss,
@@ -1006,8 +1008,10 @@ export default {
               footer,
               headerFooterStyled
             })
+            const html = result.html || result
+            const diagramErrors = result.diagramErrors || []
             this.printer.renderMarkdown(html, true)
-            this.$store.dispatch('EXPORT', { type, pageOptions })
+            this.$store.dispatch('EXPORT', { type, pageOptions, diagramErrors })
           } catch (err) {
             log.error('Failed to export document:', err)
             notice.notify({
@@ -1022,7 +1026,7 @@ export default {
         case 'print': {
           // NOTE: Print doesn't support page size or orientation.
           try {
-            const html = await this.editor.exportStyledHTML({
+            const result = await this.editor.exportStyledHTML({
               title: '',
               printOptimization: true,
               extraCss,
@@ -1031,8 +1035,10 @@ export default {
               footer,
               headerFooterStyled
             })
+            const html = result.html || result
+            const diagramErrors = result.diagramErrors || []
             this.printer.renderMarkdown(html, true)
-            this.$store.dispatch('PRINT_RESPONSE')
+            this.$store.dispatch('PRINT_RESPONSE', { diagramErrors })
           } catch (err) {
             log.error('Failed to export document:', err)
             notice.notify({

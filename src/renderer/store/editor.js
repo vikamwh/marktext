@@ -1034,7 +1034,7 @@ const actions = {
     ipcRenderer.send('mt::update-format-menu', windowId, createSelectionFormatState(formats))
   },
 
-  EXPORT ({ state }, { type, content, pageOptions }) {
+  EXPORT ({ state }, { type, content, pageOptions, diagramErrors }) {
     if (!hasKeys(state.currentFile)) return
 
     // Extract title from TOC buffer.
@@ -1065,15 +1065,20 @@ const actions = {
       content,
       filename,
       pathname,
-      pageOptions
+      pageOptions,
+      diagramErrors
     })
   },
 
   LINTEN_FOR_EXPORT_SUCCESS ({ commit }) {
-    ipcRenderer.on('mt::export-success', (e, { type, filePath }) => {
+    ipcRenderer.on('mt::export-success', (e, { type, filePath, diagramErrors }) => {
+      const hasErrors = diagramErrors && diagramErrors.length > 0
       notice.notify({
-        title: 'Exported successfully',
-        message: `Exported "${path.basename(filePath)}" successfully!`,
+        title: hasErrors ? 'Export completed with warnings' : 'Exported successfully',
+        type: hasErrors ? 'warning' : 'success',
+        message: hasErrors
+          ? `Exported "${path.basename(filePath)}" with diagram errors. Some diagrams may not render correctly.`
+          : `Exported "${path.basename(filePath)}" successfully!`,
         showConfirm: true
       })
         .then(() => {
@@ -1082,8 +1087,8 @@ const actions = {
     })
   },
 
-  PRINT_RESPONSE ({ commit }) {
-    ipcRenderer.send('mt::response-print')
+  PRINT_RESPONSE ({ commit }, { diagramErrors } = {}) {
+    ipcRenderer.send('mt::response-print', { diagramErrors })
   },
 
   LINTEN_FOR_PRINT_SERVICE_CLEARUP ({ commit }) {

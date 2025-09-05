@@ -2,7 +2,7 @@ import marked from '../parser/marked'
 import Prism from 'prismjs'
 import katex from 'katex'
 import 'katex/dist/contrib/mhchem.min.js'
-import loadRenderer from '../renderers'
+// All renderers removed in favor of Kroki Always-On
 import githubMarkdownCss from 'github-markdown-css/github-markdown.css'
 import exportStyle from '../assets/styles/exportStyle.css'
 import highlightCss from 'prismjs/themes/prism.css'
@@ -31,72 +31,95 @@ class ExportHtml {
     this.muya = muya
     this.exportContainer = null
     this.mathRendererCalled = false
+    this.diagramErrors = []
   }
 
   async renderMermaid () {
     const codes = this.exportContainer.querySelectorAll('code.language-mermaid')
-    // Try Kroki first if enabled
+    // Kroki Always-On: Only use Kroki server for rendering
     let kroki
-    const useKroki = !!(this.muya && this.muya.options && this.muya.options.enableKroki && this.muya.options.krokiServerUrl)
-    if (useKroki) {
-      try { kroki = await import('../parser/render/kroki') } catch (_) {}
-    }
-
-    if (useKroki && kroki && kroki.isKrokiSupported('mermaid')) {
+    try {
+      kroki = await import('../parser/render/kroki')
+    } catch (err) {
+      // If Kroki module cannot be loaded, show error for all diagrams
       for (const code of codes) {
-        const raw = unescapeHTML(code.innerHTML)
         const preEle = code.parentNode
         const container = document.createElement('div')
-        try {
-          const svg = await kroki.renderKrokiToSvg(this.muya.options.krokiServerUrl, 'mermaid', raw, { timeoutMs: this.muya.options.krokiTimeoutMs })
-          container.innerHTML = sanitizeRaw(svg, DIAGRAM_DOMPURIFY_CONFIG)
-        } catch (err) {
-          container.textContent = '< Invalid Mermaid or Kroki error >'
-        }
+        container.innerHTML = `<div class="ag-diagram-error">
+          <strong>Mermaid Diagram Error:</strong><br>
+          Kroki module could not be loaded: ${err.message}
+        </div>`
         preEle.replaceWith(container)
       }
       return
     }
 
-    // Fallback to local Mermaid library
     for (const code of codes) {
+      const raw = unescapeHTML(code.innerHTML)
       const preEle = code.parentNode
-      const mermaidContainer = document.createElement('div')
-      mermaidContainer.innerHTML = sanitize(unescapeHTML(code.innerHTML), EXPORT_DOMPURIFY_CONFIG, true)
-      mermaidContainer.classList.add('mermaid')
-      preEle.replaceWith(mermaidContainer)
-    }
-    const mermaid = await loadRenderer('mermaid')
-    // We only export light theme, so set mermaid theme to `default`, in the future, we can choose whick theme to export.
-    mermaid.initialize({
-      securityLevel: 'strict',
-      theme: 'default'
-    })
-    mermaid.init(undefined, this.exportContainer.querySelectorAll('div.mermaid'))
-    if (this.muya) {
-      mermaid.initialize({
-        securityLevel: 'strict',
-        theme: this.muya.options.mermaidTheme
-      })
+      const container = document.createElement('div')
+
+      try {
+        const serverUrl = (this.muya && this.muya.options && this.muya.options.krokiServerUrl) || 'http://localhost:8000'
+        const timeoutMs = (this.muya && this.muya.options && this.muya.options.krokiTimeoutMs) || 5000
+
+        const svg = await kroki.renderKrokiToSvg(serverUrl, 'mermaid', raw, { timeoutMs })
+        container.innerHTML = sanitizeRaw(svg, DIAGRAM_DOMPURIFY_CONFIG)
+      } catch (err) {
+        this.diagramErrors.push(`Mermaid: ${err.message || 'Unknown rendering error'}`)
+        container.innerHTML = `<div class="ag-diagram-error">
+          <strong>Mermaid Diagram Error:</strong><br>
+          ${err.message || 'Unknown rendering error'}
+        </div>`
+      }
+      preEle.replaceWith(container)
     }
   }
 
   async renderDiagram () {
     const selector = 'code.language-vega-lite, code.language-flowchart, code.language-sequence, code.language-plantuml'
-    const RENDER_MAP = {
-      flowchart: await loadRenderer('flowchart'),
-      sequence: await loadRenderer('sequence'),
-      plantuml: await loadRenderer('plantuml'),
-      'vega-lite': await loadRenderer('vega-lite')
-    }
-    // Try to use Kroki if enabled in Muya options
+    // Kroki Always-On: Only use Kroki server for rendering
     let kroki
-    const useKroki = !!(this.muya && this.muya.options && this.muya.options.enableKroki && this.muya.options.krokiServerUrl)
-    if (useKroki) {
-      try {
-        kroki = await import('../parser/render/kroki')
-      } catch (_) {}
+    try {
+      kroki = await import('../parser/render/kroki')
+    } catch (err) {
+      // If Kroki module cannot be loaded, show error for all diagrams
+      const codes = this.exportContainer.querySelectorAll(selector)
+      for (const code of codes) {
+        const functionType = (() => {
+          if (/sequence/.test(code.className)) {
+            return 'sequence'
+          } else if (/plantuml/.test(code.className)) {
+            return 'plantuml'
+          } else if (/flowchart/.test(code.className)) {
+            return 'flowchart'
+          } else {
+            return 'vega-lite'
+          }
+        })()
+
+        const diagramName = functionType === 'flowchart'
+          ? 'Flowchart'
+          : functionType === 'sequence'
+            ? 'Sequence Diagram'
+            : functionType === 'plantuml'
+              ? 'PlantUML'
+              : functionType === 'vega-lite'
+                ? 'Vega-Lite'
+                : functionType.charAt(0).toUpperCase() + functionType.slice(1)
+
+        const preParent = code.parentNode
+        const diagramContainer = document.createElement('div')
+        this.diagramErrors.push(`${diagramName}: Kroki module could not be loaded: ${err.message}`)
+        diagramContainer.innerHTML = `<div class="ag-diagram-error">
+          <strong>${diagramName} Error:</strong><br>
+          Kroki module could not be loaded: ${err.message}
+        </div>`
+        preParent.replaceWith(diagramContainer)
+      }
+      return
     }
+
     const codes = this.exportContainer.querySelectorAll(selector)
     for (const code of codes) {
       const rawCode = unescapeHTML(code.innerHTML)
@@ -111,52 +134,38 @@ class ExportHtml {
           return 'vega-lite'
         }
       })()
-      const render = RENDER_MAP[functionType]
+
       const preParent = code.parentNode
       const diagramContainer = document.createElement('div')
       diagramContainer.classList.add(functionType)
       preParent.replaceWith(diagramContainer)
-      const options = {}
-      if (functionType === 'sequence') {
-        Object.assign(options, { theme: this.muya.options.sequenceTheme })
-      } else if (functionType === 'vega-lite') {
-        Object.assign(options, {
-          actions: false,
-          tooltip: false,
-          renderer: 'svg',
-          theme: 'latimes' // only render light theme
-        })
-      }
-      let rendered = false
-      // Prefer Kroki
-      if (useKroki && kroki && kroki.isKrokiSupported(functionType)) {
-        try {
-          const svg = await kroki.renderKrokiToSvg(this.muya.options.krokiServerUrl, functionType, rawCode, { timeoutMs: this.muya.options.krokiTimeoutMs })
-          diagramContainer.innerHTML = sanitizeRaw(svg, DIAGRAM_DOMPURIFY_CONFIG)
-          rendered = true
-        } catch (_) {
-          // Do not fallback if Kroki is enabled
-          rendered = true
-          diagramContainer.innerHTML = '< Invalid Diagram or Kroki error >'
-        }
-      }
 
-      if (!rendered) {
-        try {
-          if (functionType === 'flowchart' || functionType === 'sequence') {
-            const diagram = render.parse(rawCode)
-            diagramContainer.innerHTML = ''
-            diagram.drawSVG(diagramContainer, options)
-          } else if (functionType === 'plantuml') {
-            const diagram = render.parse(rawCode)
-            diagramContainer.innerHTML = ''
-            diagram.insertImgElement(diagramContainer)
-          } else if (functionType === 'vega-lite') {
-            await render(diagramContainer, JSON.parse(rawCode), options)
-          }
-        } catch (err) {
-          diagramContainer.innerHTML = '< Invalid Diagram >'
+      try {
+        const serverUrl = (this.muya && this.muya.options && this.muya.options.krokiServerUrl) || 'http://localhost:8000'
+        const timeoutMs = (this.muya && this.muya.options && this.muya.options.krokiTimeoutMs) || 5000
+
+        if (kroki.isKrokiSupported(functionType)) {
+          const svg = await kroki.renderKrokiToSvg(serverUrl, functionType, rawCode, { timeoutMs })
+          diagramContainer.innerHTML = sanitizeRaw(svg, DIAGRAM_DOMPURIFY_CONFIG)
+        } else {
+          throw new Error(`Diagram type "${functionType}" is not supported by Kroki`)
         }
+      } catch (err) {
+        const diagramName = functionType === 'flowchart'
+          ? 'Flowchart'
+          : functionType === 'sequence'
+            ? 'Sequence Diagram'
+            : functionType === 'plantuml'
+              ? 'PlantUML'
+              : functionType === 'vega-lite'
+                ? 'Vega-Lite'
+                : functionType.charAt(0).toUpperCase() + functionType.slice(1)
+
+        this.diagramErrors.push(`${diagramName}: ${err.message || 'Unknown rendering error'}`)
+        diagramContainer.innerHTML = `<div class="ag-diagram-error">
+          <strong>${diagramName} Error:</strong><br>
+          ${err.message || 'Unknown rendering error'}
+        </div>`
       }
     }
   }
@@ -260,7 +269,7 @@ class ExportHtml {
 
     // `extraCss` may changed in the mean time.
     const { title, extraCss } = options
-    return `<!DOCTYPE html>
+    const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -345,6 +354,10 @@ class ExportHtml {
   ${html}
 </body>
 </html>`
+    return {
+      html: htmlContent,
+      diagramErrors: this.diagramErrors
+    }
   }
 
   /**

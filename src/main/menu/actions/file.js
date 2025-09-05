@@ -52,7 +52,7 @@ const getPdfPageOptions = options => {
 }
 
 // Handle the export response from renderer process.
-const handleResponseForExport = async (e, { type, content, pathname, title, pageOptions }) => {
+const handleResponseForExport = async (e, { type, content, pathname, title, pageOptions, diagramErrors }) => {
   const win = BrowserWindow.fromWebContents(e.sender)
   const extension = EXTENSION_HASN[type]
   const dirname = pathname ? path.dirname(pathname) : getPath('documents')
@@ -81,7 +81,7 @@ const handleResponseForExport = async (e, { type, content, pathname, title, page
         }
         await writeFile(filePath, content, extension, 'utf8')
       }
-      win.webContents.send('mt::export-success', { type, filePath })
+      win.webContents.send('mt::export-success', { type, filePath, diagramErrors })
     } catch (err) {
       log.error('Error while exporting:', err)
       const ERROR_MSG = err.message || `Error happened when export ${filePath}`
@@ -99,10 +99,27 @@ const handleResponseForExport = async (e, { type, content, pathname, title, page
   }
 }
 
-const handleResponseForPrint = e => {
+const handleResponseForPrint = (e, { diagramErrors } = {}) => {
   const win = BrowserWindow.fromWebContents(e.sender)
-  win.webContents.print({ printBackground: true }, () => {
+  win.webContents.print({ printBackground: true }, (success, errorType) => {
     removePrintServiceFromWindow(win)
+    if (success) {
+      // Send print success notification
+      const hasErrors = diagramErrors && diagramErrors.length > 0
+      win.webContents.send('mt::show-notification', {
+        title: hasErrors ? 'Print completed with warnings' : 'Print completed successfully',
+        type: hasErrors ? 'warning' : 'success',
+        message: hasErrors
+          ? 'Document printed with diagram errors. Some diagrams may not render correctly.'
+          : 'Document printed successfully!'
+      })
+    } else {
+      win.webContents.send('mt::show-notification', {
+        title: 'Print failed',
+        type: 'error',
+        message: `Print failed: ${errorType || 'Unknown error'}`
+      })
+    }
   })
 }
 
