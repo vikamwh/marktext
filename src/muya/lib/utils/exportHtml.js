@@ -16,12 +16,18 @@ export const getSanitizeHtml = (markdown, options) => {
   return sanitize(html, EXPORT_DOMPURIFY_CONFIG, false)
 }
 
+// All diagram types handled exclusively via Kroki (see kroki.js TYPE_MAP)
 const DIAGRAM_TYPE = [
   'mermaid',
   'flowchart',
-  'sequence',
+  'sequence', // legacy alias -> seqdiag
   'plantuml',
-  'vega-lite'
+  'vega-lite',
+  // Extended types
+  'graphviz', 'dot',
+  'd2', 'svgbob', 'wavedrom', 'nomnoml', 'pikchr', 'erd', 'c4plantuml',
+  'blockdiag', 'actdiag', 'seqdiag', 'nwdiag', 'packetdiag', 'rackdiag',
+  'bytefield', 'bpmn', 'wireviz'
 ]
 
 class ExportHtml {
@@ -68,7 +74,11 @@ class ExportHtml {
   }
 
   async renderDiagram () {
-    const selector = 'code.language-vega-lite, code.language-flowchart, code.language-sequence, code.language-plantuml'
+    // Build selector dynamically to keep in sync with DIAGRAM_TYPE (excluding mermaid which is handled separately)
+    const selector = DIAGRAM_TYPE
+      .filter(t => t !== 'mermaid')
+      .map(t => `code.language-${t}`)
+      .join(', ')
 
     // Always use Kroki for HTML export
     let kroki
@@ -91,18 +101,12 @@ class ExportHtml {
     const codes = this.exportContainer.querySelectorAll(selector)
     for (const code of codes) {
       const rawCode = unescapeHTML(code.innerHTML)
-      const functionType = (() => {
-        if (/sequence/.test(code.className)) {
-          return 'sequence'
-        } else if (/plantuml/.test(code.className)) {
-          return 'plantuml'
-        } else if (/flowchart/.test(code.className)) {
-          return 'flowchart'
-        } else {
-          return 'vega-lite'
-        }
-      })()
+      // Dynamische Ermittlung: erste Klasse die mit language- beginnt
+      let functionType = Array.from(code.classList)
+        .filter(cls => cls.startsWith('language-'))
+        .map(cls => cls.substring('language-'.length))[0] || 'unknown'
 
+      // Legacy Aliases bereits in kroki.js TYPE_MAP abgedeckt (sequence, dot)
       const preParent = code.parentNode
       const diagramContainer = document.createElement('div')
       diagramContainer.classList.add(functionType)

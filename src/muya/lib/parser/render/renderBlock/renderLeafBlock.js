@@ -190,10 +190,29 @@ export default function renderLeafBlock (parent, block, activeBlocks, matches, u
         }
         break
       }
+      // Diagram types handled uniformly via Kroki (intentional fallthrough grouping)
       case 'flowchart':
       case 'sequence':
       case 'plantuml':
-      case 'vega-lite': {
+      case 'vega-lite':
+      case 'graphviz':
+      case 'dot':
+      case 'd2':
+      case 'svgbob':
+      case 'wavedrom':
+      case 'nomnoml':
+      case 'pikchr':
+      case 'erd':
+      case 'c4plantuml':
+      case 'blockdiag':
+      case 'actdiag':
+      case 'seqdiag':
+      case 'nwdiag':
+      case 'packetdiag':
+      case 'rackdiag':
+      case 'bytefield':
+      case 'bpmn':
+      case 'wireviz': { /* falls through */
         selector += `.${CLASS_OR_ID.AG_CONTAINER_PREVIEW}`
         Object.assign(data.attrs, { spellcheck: 'false' })
         if (code === '') {

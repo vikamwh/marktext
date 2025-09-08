@@ -2,11 +2,35 @@
 // API: POST {serverUrl}/{diagramType}/svg with raw text body (diagram source)
 // - Content-Type: text/plain
 // - Accept: image/svg+xml
+// Supported diagram types reference: https://kroki.io/#diagram-types
+// Keys are the functionType (language identifier) used internally, values are Kroki endpoint names.
 
 const TYPE_MAP = {
+  // Existing
   mermaid: 'mermaid',
   plantuml: 'plantuml',
-  'vega-lite': 'vegalite'
+  'vega-lite': 'vegalite',
+  // Map legacy/local names to Kroki equivalents
+  sequence: 'seqdiag', // Local "sequence" code fence now rendered via seqdiag
+  // Additional Kroki diagram types enabled
+  graphviz: 'graphviz',
+  dot: 'graphviz', // alias
+  d2: 'd2',
+  svgbob: 'svgbob',
+  wavedrom: 'wavedrom',
+  nomnoml: 'nomnoml',
+  pikchr: 'pikchr',
+  erd: 'erd',
+  c4plantuml: 'c4plantuml',
+  blockdiag: 'blockdiag',
+  actdiag: 'actdiag',
+  seqdiag: 'seqdiag',
+  nwdiag: 'nwdiag',
+  packetdiag: 'packetdiag',
+  rackdiag: 'rackdiag',
+  bytefield: 'bytefield',
+  bpmn: 'bpmn',
+  wireviz: 'wireviz'
 }
 
 export const isKrokiSupported = (functionType) => {
