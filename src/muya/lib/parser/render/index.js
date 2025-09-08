@@ -133,8 +133,6 @@ class StateRender {
       const serverUrl = this.muya.options.krokiServerUrl || 'https://kroki.io'
       const timeoutMs = this.muya.options.krokiTimeoutMs || 5000
 
-      console.log('🔄 Starting mermaid parallel processing...', diagramTasks.length, 'tasks')
-
       const results = await this.parallelProcessor.processAll(
         diagramTasks,
         async ({ key, value, target }, index) => {
@@ -410,22 +408,9 @@ class StateRender {
             // Ensure SVG is properly sized while preserving original dimensions
             const svgElement = target.querySelector('svg')
             if (svgElement) {
-              // Mark this SVG as a general diagram to distinguish from Mermaid
-              svgElement.setAttribute('data-diagram-type', 'general')
-
-              // CRITICAL: Isolate general diagram styles to prevent affecting Mermaid
-              // Create a container with isolated styling context
-              svgElement.style.isolation = 'isolate'
-              svgElement.style.contain = 'style layout'
-
-              // Force local font context to prevent global font inheritance issues
-              svgElement.style.fontFamily = 'initial'
-              svgElement.style.fontSize = 'initial'
-              svgElement.style.fontWeight = 'initial'
-
-              // NUCLEAR OPTION: Remove ALL font-related styles from all text elements in general diagrams
-              const allTextElements = svgElement.querySelectorAll('*')
-              allTextElements.forEach(el => {
+              // Remove ALL font-related styles from all elements to prevent Mermaid interference
+              const allElements = svgElement.querySelectorAll('*')
+              allElements.forEach(el => {
                 if (el.style) {
                   el.style.fontFamily = ''
                   el.style.fontSize = ''
@@ -440,86 +425,15 @@ class StateRender {
                 el.removeAttribute('font-style')
               })
 
-              // Store and preserve original dimensions
-              const viewBox = svgElement.getAttribute('viewBox')
-              const width = svgElement.getAttribute('width')
-              const height = svgElement.getAttribute('height')
+              // Remove all style tags that could affect global CSS
+              const styleTags = svgElement.querySelectorAll('style')
+              styleTags.forEach(styleTag => styleTag.remove())
 
-              // Calculate original size and preserve it
-              let originalWidth = width
-              let originalHeight = height
-
-              if (viewBox) {
-                const [, , vbWidth, vbHeight] = viewBox.split(' ').map(Number)
-                if (!width) originalWidth = vbWidth
-                if (!height) originalHeight = vbHeight
-              }
-
-              // Apply gentle constraints that preserve the original size
-              if (originalWidth && originalHeight) {
-                svgElement.style.width = `${originalWidth}px`
-                svgElement.style.height = `${originalHeight}px`
-                svgElement.style.maxWidth = '100%'
-                svgElement.style.maxHeight = 'none'
-              } else {
-                svgElement.style.maxWidth = '100%'
-                svgElement.style.height = 'auto'
-              }
-
-              // Ensure block display and preserve viewBox
+              // Ensure proper sizing
+              svgElement.style.maxWidth = '100%'
+              svgElement.style.height = 'auto'
               svgElement.style.display = 'block'
-
-              if (!viewBox && originalWidth && originalHeight) {
-                svgElement.setAttribute('viewBox', `0 0 ${originalWidth} ${originalHeight}`)
-              }
-
-              // Set up observer to detect and prevent unwanted size changes
-              let isProtecting = false
-              const observer = new MutationObserver((mutations) => {
-                if (isProtecting) return
-
-                mutations.forEach((mutation) => {
-                  if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-                    const currentStyle = svgElement.getAttribute('style') || ''
-                    // Only intervene if styles are being modified in ways that break layout
-                    if (currentStyle.includes('font-size') || currentStyle.includes('font-weight')) {
-                      isProtecting = true
-                      // Reapply our size constraints
-                      if (originalWidth && originalHeight) {
-                        svgElement.style.width = `${originalWidth}px`
-                        svgElement.style.height = `${originalHeight}px`
-                        svgElement.style.maxWidth = '100%'
-                      }
-                      svgElement.style.display = 'block'
-                      setTimeout(() => { isProtecting = false }, 100)
-                    }
-                  }
-                })
-              })
-              observer.observe(svgElement, { attributes: true, attributeFilter: ['style'] })
-
-              // Also observe text elements within SVG for font changes
-              const textElements = svgElement.querySelectorAll('text, tspan')
-              textElements.forEach(textEl => {
-                const textObserver = new MutationObserver(() => {
-                  if (isProtecting) return
-                  // Reset font styles on text elements if they get modified
-                  textEl.style.fontWeight = 'normal'
-                  textEl.style.fontSize = ''
-                })
-                textObserver.observe(textEl, { attributes: true, attributeFilter: ['style'] })
-                setTimeout(() => textObserver.disconnect(), 10000)
-              })
-
-              // Clean up main observer after 10 seconds
-              setTimeout(() => observer.disconnect(), 10000)
             }
-
-            // CRITICAL: Immediately protect Mermaid after this general diagram is rendered
-            setTimeout(() => {
-              console.log('⚡ SINGLE: Protecting Mermaid after single general diagram render')
-              this.immediatelyProtectMermaidDiagrams()
-            }, 0)
           }
         } else {
           // Error rendering
@@ -538,86 +452,8 @@ class StateRender {
         }
       }
 
-      // After all general diagrams are rendered, ensure Mermaid diagrams remain protected
-      setTimeout(() => {
-        console.log('🛡️ CLEANUP: Protecting Mermaid diagrams after general rendering')
-        const protectedSvgs = this.container.querySelectorAll('svg[data-protected="true"]')
-        protectedSvgs.forEach(svg => {
-          // Reinforce SVG-level protection
-          svg.style.isolation = svg.style.isolation || 'isolate'
-
-          // Reinforce text element protection against font weight changes
-          const textElements = svg.querySelectorAll('text, tspan')
-          textElements.forEach(textEl => {
-            // Reset any inherited styles from general diagram rendering
-            if (textEl.style.fontWeight && textEl.style.fontWeight !== 'normal') {
-              console.log('🛡️ Resetting Mermaid text font weight from', textEl.style.fontWeight, 'to normal')
-              textEl.style.fontWeight = 'normal'
-            }
-            if (textEl.style.fontSize && textEl.style.fontSize !== '') {
-              console.log('🛡️ Resetting Mermaid text font size from', textEl.style.fontSize, 'to initial')
-              textEl.style.fontSize = 'initial'
-            }
-          })
-        })
-
-        // Also clean up any global styles that might have been set by general diagrams
-        const generalSvgs = this.container.querySelectorAll('svg[data-diagram-type="general"]')
-        generalSvgs.forEach(svg => {
-          // Ensure general diagrams remain isolated and don't affect siblings
-          svg.style.isolation = 'isolate'
-          svg.style.contain = 'style layout'
-        })
-      }, 150)
-
-      // IMMEDIATE PROTECTION: Reset Mermaid styles as soon as general diagrams finish
-      this.immediatelyProtectMermaidDiagrams()
-
       this.diagramCache.clear()
     }
-  }
-
-  immediatelyProtectMermaidDiagrams () {
-    console.log('⚡ IMMEDIATE: Protecting Mermaid diagrams from general diagram interference')
-    const protectedSvgs = this.container.querySelectorAll('svg[data-protected="true"]')
-
-    protectedSvgs.forEach(svg => {
-      console.log('⚡ IMMEDIATE: Processing protected Mermaid SVG')
-
-      // Force isolation immediately
-      svg.style.isolation = 'isolate'
-      svg.style.contain = 'style layout'
-
-      // Reset any text elements that got affected
-      const textElements = svg.querySelectorAll('text, tspan')
-      textElements.forEach(textEl => {
-        // Immediately reset font properties
-        if (textEl.style.fontWeight !== '' && textEl.style.fontWeight !== 'normal') {
-          console.log('⚡ IMMEDIATE: Resetting text font-weight from', textEl.style.fontWeight)
-          textEl.style.fontWeight = 'normal'
-        }
-        if (textEl.style.fontSize !== '') {
-          console.log('⚡ IMMEDIATE: Resetting text font-size from', textEl.style.fontSize)
-          textEl.style.fontSize = ''
-        }
-        if (textEl.style.fontFamily !== '') {
-          console.log('⚡ IMMEDIATE: Resetting text font-family from', textEl.style.fontFamily)
-          textEl.style.fontFamily = ''
-        }
-
-        // Remove any CSS classes that might affect font styling
-        textEl.removeAttribute('class')
-
-        // Force a style recalculation
-        textEl.style.display = textEl.style.display || 'inline'
-      })
-
-      // Force a repaint of the SVG
-      svg.style.transform = 'translateZ(0)'
-      setTimeout(() => {
-        svg.style.transform = ''
-      }, 0)
-    })
   }
 
   getDiagramDisplayName (functionType) {
@@ -664,30 +500,10 @@ class StateRender {
     const rootDom = document.querySelector(selector) || this.container
     const oldVdom = toVNode(rootDom)
 
-    console.log('🔄 RENDER: Starting main render process')
-    console.log('🔄 RENDER: Mermaid cache size:', this.mermaidCache.size)
-    console.log('🔄 RENDER: Diagram cache size:', this.diagramCache.size)
-
-    // Check existing SVGs before patch
-    const existingMermaidSvgs = this.container.querySelectorAll('svg[data-diagram-type="mermaid"]')
-    const existingGeneralSvgs = this.container.querySelectorAll('svg[data-diagram-type="general"]')
-    console.log('🔄 RENDER: Before patch - Mermaid SVGs:', existingMermaidSvgs.length, 'General SVGs:', existingGeneralSvgs.length)
-
     patch(oldVdom, newVdom)
 
-    // Check SVGs after patch
-    const afterMermaidSvgs = this.container.querySelectorAll('svg[data-diagram-type="mermaid"]')
-    const afterGeneralSvgs = this.container.querySelectorAll('svg[data-diagram-type="general"]')
-    console.log('🔄 RENDER: After patch - Mermaid SVGs:', afterMermaidSvgs.length, 'General SVGs:', afterGeneralSvgs.length)
-    console.log('🔄 RENDER: DOM patched, starting diagram rendering')
-
-    // FIXED: Render Mermaid first with isolation to prevent interference from general diagrams
-    console.log('🔧 FIX: Rendering Mermaid FIRST with isolation protection')
     this.renderMermaid().then(() => {
-      console.log('🔄 RENDER: Mermaid completed, starting isolated general diagrams')
       return this.renderDiagram()
-    }).then(() => {
-      console.log('🔄 RENDER: All diagram rendering completed (correct order + isolation)')
     }).catch(err => {
       console.warn('Diagram rendering error:', err)
     })
@@ -733,8 +549,6 @@ class StateRender {
       }
     }
 
-    // FIXED: Render Mermaid first with isolation in partialRender
-    console.log('🔧 FIX: partialRender - Mermaid first with isolation')
     this.renderMermaid().then(() => {
       return this.renderDiagram()
     }).catch(err => {
@@ -756,8 +570,6 @@ class StateRender {
     const rootDom = document.querySelector(selector)
     const oldVdom = toVNode(rootDom)
     patch(oldVdom, newVdom)
-    // FIXED: Render Mermaid first with isolation in singleRender
-    console.log('🔧 FIX: singleRender - Mermaid first with isolation')
     this.renderMermaid().then(() => {
       return this.renderDiagram()
     }).catch(err => {
