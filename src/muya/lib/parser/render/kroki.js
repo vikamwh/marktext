@@ -1,7 +1,9 @@
-// Simple Kroki client to render diagrams to SVG
+// Enhanced Kroki client with caching and parallel processing
 // API: POST {serverUrl}/{diagramType}/svg with raw text body (diagram source)
 // - Content-Type: text/plain
 // - Accept: image/svg+xml
+
+import krokiCache from '../../utils/krokiCache'
 
 const TYPE_MAP = {
   // Existing supported types
@@ -67,11 +69,26 @@ export async function renderKrokiToSvg (serverUrl, functionType, code, opts = {}
   if (!diagramType) {
     throw new Error(`Unsupported Kroki diagram type: ${functionType}`)
   }
+
+  // Check cache first
+  try {
+    const cachedSvg = await krokiCache.get(functionType, code)
+    if (cachedSvg) {
+      return cachedSvg
+    }
+  } catch (error) {
+    console.warn('Cache read error:', error)
+  }
+
   const base = serverUrl.replace(/\/$/, '')
   const url = `${base}/${diagramType}/svg`
-  // Setup abort controller with optional timeout for quick fallback
+  // Setup abort controller with timeout for all requests
   const controller = new AbortController()
-  const _timer = timeoutMs > 0 ? setTimeout(() => controller.abort(new Error('kroki-timeout')), timeoutMs) : null
+  const effectiveTimeout = timeoutMs || 10000 // Default 10 seconds if not specified
+  const _timer = setTimeout(() => {
+    controller.abort(new Error('kroki-timeout'))
+  }, effectiveTimeout)
+
   if (signal && typeof signal.addEventListener === 'function') {
     signal.addEventListener('abort', () => controller.abort(signal.reason), { once: true })
   }
@@ -86,18 +103,28 @@ export async function renderKrokiToSvg (serverUrl, functionType, code, opts = {}
     })
   } catch (err) {
     if (err.name === 'AbortError' || err.message === 'kroki-timeout') {
-      throw new Error(`Kroki server timeout (${timeoutMs}ms). Check server availability at: ${serverUrl}`)
+      throw new Error(`Kroki server timeout (${effectiveTimeout}ms). Check server availability at: ${serverUrl}`)
     }
     throw new Error(`Cannot reach Kroki server at: ${serverUrl}. Please check server URL and network connection.`)
   } finally {
-    if (_timer) clearTimeout(_timer)
+    clearTimeout(_timer)
   }
 
   if (!res.ok) {
-    let text = await res.text().catch(() => '')
-    let errorMsg = `Kroki render failed (${res.status})`
+    let text = ''
+    try {
+      // Add timeout for reading error response to prevent hanging
+      const textPromise = res.text()
+      const timeoutPromise = new Promise((resolve, reject) =>
+        setTimeout(() => reject(new Error('Response read timeout')), 3000)
+      )
+      text = await Promise.race([textPromise, timeoutPromise])
+      if (text.length > 1024) { text = text.slice(0, 1024) }
+    } catch (error) {
+      text = 'Unable to read error details'
+    }
 
-    if (text.length > 1024) { text = text.slice(0, 1024) }
+    let errorMsg = `Kroki render failed (${res.status})`
 
     if (res.status === 400) {
       errorMsg = `Invalid ${functionType} syntax. Please check your diagram code.\n${text}`
@@ -105,11 +132,31 @@ export async function renderKrokiToSvg (serverUrl, functionType, code, opts = {}
       errorMsg = `Diagram type "${functionType}" is not supported by this Kroki server.\n${text}`
     } else if (res.status >= 500) {
       errorMsg = `Kroki server error (${res.status}). Server may be overloaded or misconfigured.\n${text}`
-    } else if (text) {
+    } else if (text && text !== 'Unable to read error details') {
       errorMsg += `: ${text}`
     }
 
     throw new Error(errorMsg)
   }
-  return res.text()
+
+  // Read successful response with timeout protection
+  let svg
+  try {
+    const textPromise = res.text()
+    const timeoutPromise = new Promise((resolve, reject) =>
+      setTimeout(() => reject(new Error('Response read timeout')), 5000)
+    )
+    svg = await Promise.race([textPromise, timeoutPromise])
+  } catch (error) {
+    throw new Error(`Failed to read SVG response: ${error.message}`)
+  }
+
+  // Cache the result for future use
+  try {
+    await krokiCache.set(functionType, code, svg)
+  } catch (error) {
+    console.warn('Cache write error:', error)
+  }
+
+  return svg
 }

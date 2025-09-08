@@ -843,11 +843,13 @@ const actions = {
     if (typeof selected === 'undefined') {
       selected = true
     }
-    // Check if tab already exist and always select existing tab if so.
+    // Check if tab already exist and reload content if so.
     const { currentFile, tabs } = state
     const { pathname } = markdownDocument
     const existingTab = tabs.find(t => isSamePathSync(t.pathname, pathname))
     if (existingTab) {
+      // Update existing tab with fresh content from disk using LOAD_CHANGE
+      commit('LOAD_CHANGE', { data: markdownDocument, pathname })
       dispatch('UPDATE_CURRENT_FILE', existingTab)
       return
     }

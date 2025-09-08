@@ -7,5 +7,5 @@ curl https://kroki.io/graphviz/svg --data-raw "digraph G {Hello->World}" > diagr
 alternativ mit localhost ohne Umleitung in file:
 
 ```
-curl http://localhost:8000 --data-raw "digraph G {Hello->World}"
+curl http://localhost:8000/graphviz/svg --data-raw "digraph G {Hello->World}"
 ```

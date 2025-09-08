@@ -17,6 +17,12 @@ Kroki kann noch mehr Diagramm Typen die aktuell nicht unterstützt werden.
 - Analysiere zuvor den Code. Analysiere den Pfad vom Parsen bis hin zum generieren des Grafik vollständig.
   - Falls Du mehrfach damit Probleme hast, dann füge einen einfachen Debug Mechanismus über logfiles o.ä. ein.
   - Entferne unnötigen Debug-Code wieder, wenn Du ihn nicht mehr benötigst, spätestens wenn die Aufgabe abgeschlossen ist.
+- Diagramme sollen parallel vom Server angefordert werden.
+  - Die Anzahl der max. parallelen Requests soll begrenzt sein. Erstelle hierfür einen weiteren Parameter in dem Einstellungs-Dialog. Default soll 5 sein (max. 5 parallele Requests).
+  - Der Kroki-Server soll mit einem cache-Mechanismus geschont werden.
+    - Der cache soll nicht nur im RAM verfügbar, sondern auch auf der Festplatte persistiert sein.
+    - Beachte eine sichere Erkennung von Änderungen im Diagramm-Code, auch außerhalb der Applikation. Implementiere daher eine sichere Erkennung über Hash-Summen vom Diagramm-Code.
+
 
 
 ## git

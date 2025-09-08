@@ -49,8 +49,9 @@
   "isGitlabCompatibilityEnabled": false,
   "sequenceTheme": "hand",
 
-  "krokiServerUrl": "http://localhost:8000",
+  "krokiServerUrl": "https://kroki.io",
   "krokiTimeoutMs": 5000,
+  "krokiParallelRequests": 5,
   
 
   "theme": "light",

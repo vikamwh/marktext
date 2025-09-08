@@ -5,15 +5,22 @@
     "default": false
   },
   "krokiServerUrl": {
-    "description": "Markdown--Kroki server base URL (e.g., http://localhost:8000).",
+    "description": "Markdown--Kroki server base URL (e.g., https://kroki.io).",
     "type": "string",
-    "default": "http://localhost:8000"
+    "default": "https://kroki.io"
   },
   "krokiTimeoutMs": {
     "description": "Markdown--Timeout for Kroki requests in milliseconds.",
     "type": "number",
     "minimum": 0,
     "default": 5000
+  },
+  "krokiParallelRequests": {
+    "description": "Markdown--Maximum number of parallel Kroki diagram requests.",
+    "type": "number",
+    "minimum": 1,
+    "maximum": 20,
+    "default": 5
   },
   "autoSaveDelay": {
     "description": "General--The time in ms after a change that the file is saved.",

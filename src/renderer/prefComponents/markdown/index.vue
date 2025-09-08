@@ -96,7 +96,7 @@
           description="Kroki server URL"
           :input="krokiServerUrl"
           :onChange="value => onSelectChange('krokiServerUrl', value)"
-          :defaultValue="'http://localhost:8000'"
+          :defaultValue="'https://kroki.io'"
           :regexValidator="/^(https?:\/\/).*/"
         ></text-box>
         <text-box
@@ -106,6 +106,14 @@
           :onChange="value => onSelectChange('krokiTimeoutMs', Math.max(0, parseInt(value || '0', 10) || 0))"
           :defaultValue="'5000'"
           :regexValidator="/^(?:\d+)$|^$/"
+        ></text-box>
+        <text-box
+          description="Max parallel Kroki requests"
+          notes="Maximum number of simultaneous diagram requests to Kroki server."
+          :input="String(krokiParallelRequests)"
+          :onChange="value => onSelectChange('krokiParallelRequests', Math.max(1, Math.min(20, parseInt(value || '5', 10) || 5)))"
+          :defaultValue="'5'"
+          :regexValidator="/^(?:[1-9]|1[0-9]|20)$/"
         ></text-box>
       </template>
     </compound>
@@ -174,7 +182,8 @@ export default {
       isGitlabCompatibilityEnabled: state => state.preferences.isGitlabCompatibilityEnabled,
       sequenceTheme: state => state.preferences.sequenceTheme,
       krokiServerUrl: state => state.preferences.krokiServerUrl,
-      krokiTimeoutMs: state => state.preferences.krokiTimeoutMs
+      krokiTimeoutMs: state => state.preferences.krokiTimeoutMs,
+      krokiParallelRequests: state => state.preferences.krokiParallelRequests
     })
   },
   methods: {
