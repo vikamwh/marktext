@@ -136,18 +136,18 @@ class StateRender {
       const results = await this.parallelProcessor.processAll(
         diagramTasks,
         async ({ key, value, target }, index) => {
-          const { code } = value
+          const { code, functionType } = value
 
-          console.log(`📊 Processing mermaid ${index}:`, key, code.substring(0, 50))
+          console.log(`📊 Processing ${functionType} ${index}:`, key, code.substring(0, 50))
           // Show loading indicator
-          target.innerHTML = '<div class="ag-diagram-loading">Rendering Mermaid diagram...</div>'
+          target.innerHTML = `<div class="ag-diagram-loading">Rendering ${functionType} diagram...</div>`
 
           try {
-            const svg = await kroki.renderKrokiToSvg(serverUrl, 'mermaid', code, { timeoutMs })
-            console.log(`✅ Mermaid ${index} success:`, svg.length, 'chars')
+            const svg = await kroki.renderKrokiToSvg(serverUrl, functionType, code, { timeoutMs })
+            console.log(`✅ ${functionType} ${index} success:`, svg.length, 'chars')
             return { key, target, svg, success: true }
           } catch (err) {
-            console.log(`❌ Mermaid ${index} error:`, err.message)
+            console.log(`❌ ${functionType} ${index} error:`, err.message)
             return { key, target, error: err.message || 'Unknown rendering error', success: false }
           }
         }

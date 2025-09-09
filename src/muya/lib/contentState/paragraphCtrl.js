@@ -23,11 +23,18 @@ const paragraphCtrl = ContentState => {
     const cursorCoords = selection.getCursorCoords()
     const startBlock = this.getBlock(start.key)
     const endBlock = this.getBlock(end.key)
+
+    // Safety check: ensure blocks exist
+    if (!startBlock || !endBlock) {
+      console.warn(`Block not found - startBlock: ${!!startBlock}, endBlock: ${!!endBlock}`)
+      return
+    }
+
     const startParents = this.getParents(startBlock)
     const endParents = this.getParents(endBlock)
     const affiliation = startParents
-      .filter(p => endParents.includes(p))
-      .filter(p => PARAGRAPH_TYPES.includes(p.type))
+      .filter(p => p && endParents.includes(p))
+      .filter(p => p && PARAGRAPH_TYPES.includes(p.type))
 
     start.type = startBlock.type
     start.block = startBlock

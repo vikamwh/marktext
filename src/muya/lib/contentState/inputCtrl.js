@@ -106,6 +106,12 @@ const inputCtrl = ContentState => {
     const block = this.getBlock(key)
     const paragraph = document.querySelector(`#${key}`)
 
+    // Safety check: ensure block exists
+    if (!block) {
+      console.warn(`Block not found for key: ${key}`)
+      return
+    }
+
     // Fix issue 1447
     // Fixme: any better solution?
     if (
