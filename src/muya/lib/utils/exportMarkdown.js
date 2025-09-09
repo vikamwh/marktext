@@ -282,6 +282,9 @@ class ExportMarkdown {
 
   normalizeHTML (block, indent) { // figure
     const result = []
+    if (!block.children?.[0]?.children?.[0]?.children?.[0]) {
+      return ''
+    }
     const codeContentText = block.children[0].children[0].children[0].text
     const lines = codeContentText.split('\n')
     for (const line of lines) {
@@ -300,10 +303,10 @@ class ExportMarkdown {
       return str.replace(/([^\\])\|/g, '$1\\|')
     }
 
-    tableData.push(tHeader.children[0].children.map(th => escapeText(th.children[0].text).trim()))
+    tableData.push(tHeader.children[0].children.map(th => escapeText(th.children?.[0]?.text || '').trim()))
     if (tBody) {
       tBody.children.forEach(bodyRow => {
-        tableData.push(bodyRow.children.map(td => escapeText(td.children[0].text).trim()))
+        tableData.push(bodyRow.children.map(td => escapeText(td.children?.[0]?.text || '').trim()))
       })
     }
 

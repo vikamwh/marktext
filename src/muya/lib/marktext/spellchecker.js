@@ -34,8 +34,8 @@ export const offsetToWordCursor = (lineCursor, left, right) => {
  */
 export const validateLineCursor = selection => {
   // Validate selection range.
-  if (!selection && !selection.start && !selection.start.hasOwnProperty('offset') &&
-    !selection.end && !selection.end.hasOwnProperty('offset')) {
+  if (!selection || !selection.start || !selection.start.hasOwnProperty('offset') ||
+    !selection.end || !selection.end.hasOwnProperty('offset')) {
     return false
   }
 

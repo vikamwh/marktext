@@ -24,12 +24,12 @@ const arrowCtrl = ContentState => {
     const column = row.children.indexOf(thOrTd)
     if (rowContainer.type === 'thead') {
       const tbody = this.getNextSibling(rowContainer)
-      if (tbody && tbody.children.length) {
+      if (tbody && tbody.children.length && tbody.children[0].children[column]) {
         return tbody.children[0].children[column].children[0]
       }
     } else if (rowContainer.type === 'tbody') {
       const nextRow = this.getNextSibling(row)
-      if (nextRow) {
+      if (nextRow && nextRow.children[column]) {
         return nextRow.children[column].children[0]
       }
     }
