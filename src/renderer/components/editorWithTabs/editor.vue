@@ -660,6 +660,10 @@ export default {
       // })
 
       this.editor.on('selectionChange', changes => {
+        if (!changes.cursorCoords) {
+          console.warn('selectionChange called without cursorCoords')
+          return
+        }
         const { y } = changes.cursorCoords
         if (this.typewriter) {
           const startPosition = container.scrollTop

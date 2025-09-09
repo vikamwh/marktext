@@ -151,6 +151,16 @@ export async function renderKrokiToSvg (serverUrl, functionType, code, opts = {}
     throw new Error(`Failed to read SVG response: ${error.message}`)
   }
 
+  // Validate SVG content - empty response indicates syntax error
+  if (!svg || svg.trim().length === 0) {
+    throw new Error(`${functionType} maybe diagram syntax error: Kroki server returned empty response. Please check your diagram syntax.`)
+  }
+
+  // Basic SVG validation
+  if (!svg.includes('<svg')) {
+    throw new Error(`Invalid SVG response from Kroki server. Response: ${svg.substring(0, 100)}...`)
+  }
+
   // Cache the result for future use
   try {
     await krokiCache.set(functionType, code, svg)

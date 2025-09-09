@@ -137,6 +137,11 @@ const inputCtrl = ContentState => {
     let needRender = false
     let needRenderAll = false
     if (oldStart.key !== oldEnd.key) {
+      // Clear history timer during multi-block operations to prevent incremental text reappearing
+      if (this.historyTimer) {
+        clearTimeout(this.historyTimer)
+        this.historyTimer = null
+      }
       const startBlock = this.getBlock(oldStart.key)
       const startOutmostBlock = this.findOutMostBlock(startBlock)
       const endBlock = this.getBlock(oldEnd.key)

@@ -412,7 +412,18 @@ class Selection {
     const { anchor, focus } = cursorRange
     const anchorParagraph = document.querySelector(`#${anchor.key}`)
     const focusParagraph = document.querySelector(`#${focus.key}`)
+
+    // Safety check: ensure both paragraphs exist after deletion operations
+    if (!anchorParagraph || !focusParagraph) {
+      console.warn(`Paragraph not found - anchor: ${!!anchorParagraph}, focus: ${!!focusParagraph}`)
+      return
+    }
+
     const getNodeAndOffset = (node, offset) => {
+      if (!node || node.nodeType === undefined) {
+        console.warn('Invalid node passed to getNodeAndOffset')
+        return { node: null, offset: 0 }
+      }
       if (node.nodeType === 3) {
         return {
           node,
@@ -481,6 +492,12 @@ class Selection {
 
     let { node: anchorNode, offset: anchorOffset } = getNodeAndOffset(anchorParagraph, anchor.offset)
     let { node: focusNode, offset: focusOffset } = getNodeAndOffset(focusParagraph, focus.offset)
+
+    // Safety check: ensure nodes were found
+    if (!anchorNode || !focusNode) {
+      console.warn('Failed to get nodes from paragraphs')
+      return
+    }
 
     if (anchorNode.nodeType === 3 || anchorNode.nodeType === 1 && !anchorNode.classList.contains('ag-image-container')) {
       anchorOffset = Math.min(anchorOffset, anchorNode.textContent.length)

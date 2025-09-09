@@ -486,6 +486,11 @@ class ContentState {
       if (/td|th/.test(after.type)) {
         this.exemption.add(this.closest(after, 'figure'))
       }
+      // Prevent history commits during complex block removal operations
+      if (this.historyTimer) {
+        clearTimeout(this.historyTimer)
+        this.historyTimer = null
+      }
     }
     let nextSibling = this.getBlock(before.nextSibling)
     let beforeEnd = false
