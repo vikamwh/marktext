@@ -70,10 +70,12 @@ digraph G {
 ```
 
 ## Sequence (via SeqDiag)
+
 ```sequence
-Alice->Bob: Hello Bob, how are you?
-Note right of Bob: Bob thinks
-Bob-->Alice: I am good thanks!
+seqdiag {
+  browser  -> webserver;
+  browser <-- webserver;
+}
 ```
 
 ## GraphViz

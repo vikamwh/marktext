@@ -131,6 +131,7 @@ const mutations = {
     // Backup few entries that we need to restore later.
     const oldId = tab.id
     const oldNotifications = tab.notifications
+    const oldCursor = tab.cursor
     let oldHistory = null
     if (tab.history.index >= 0 && tab.history.stack.length >= 1) {
       // Allow to restore the old document.
@@ -148,6 +149,31 @@ const mutations = {
     Object.assign(tab, newFileState)
     tab.id = oldId
     tab.notifications = oldNotifications
+    // Try to preserve cursor/selection on reload if possible.
+    // Clamp the old cursor to the new document shape to avoid out-of-range positions.
+    if (oldCursor) {
+      const clampCursor = (cursor, text) => {
+        try {
+          const lines = String(text).split('\n')
+          const maxLine = Math.max(0, lines.length - 1)
+          const clampPos = (pos) => {
+            const line = Math.min(Math.max(0, pos.line || 0), maxLine)
+            const lineText = lines[line] || ''
+            const ch = Math.min(Math.max(0, pos.ch || 0), lineText.length)
+            return { line, ch }
+          }
+          const anchor = clampPos(cursor.anchor || cursor.start || { line: 0, ch: 0 })
+          const focus = clampPos(cursor.focus || cursor.end || anchor)
+          return { anchor, focus }
+        } catch (e) {
+          return null
+        }
+      }
+      const safeCursor = clampCursor(oldCursor, markdown)
+      if (safeCursor) {
+        tab.cursor = safeCursor
+      }
+    }
     if (oldHistory) {
       tab.history = oldHistory
     }

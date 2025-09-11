@@ -583,9 +583,10 @@ const importRegister = ContentState => {
     if (hasCursor) {
       travel(this.blocks)
     } else {
-      const lastBlock = this.getLastBlock()
-      const key = lastBlock.key
-      const offset = lastBlock.text.length
+      // Default to the start of the document (top) instead of the end.
+      const firstBlock = this.getFirstBlock()
+      const key = firstBlock.key
+      const offset = 0
       cursor.anchor = { key, offset }
       cursor.focus = { key, offset }
     }

@@ -660,8 +660,8 @@ export default {
       // })
 
       this.editor.on('selectionChange', changes => {
-        if (!changes.cursorCoords) {
-          console.warn('selectionChange called without cursorCoords')
+        if (!changes || !changes.cursorCoords) {
+          console.warn('selectionChange called without payload or cursorCoords')
           return
         }
         const { y } = changes.cursorCoords
@@ -1111,6 +1111,8 @@ export default {
           editor.setMarkdown(markdown, cursor, true)
         } else {
           editor.setMarkdown(markdown)
+          // Ensure we show the beginning of the document on initial open
+          this.scrollToCursor(0)
         }
       }
     },
